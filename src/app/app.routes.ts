@@ -21,9 +21,4 @@ export const routes: Routes = [
         path: "",
         loadComponent: () => import('./views/home/home').then((archivo) => archivo.Home),
     },
-    {
-        path: "**",
-        redirectTo: "Error",
-        pathMatch: "full",
-    }
 ];

@@ -1,1 +1,24 @@
-<p>profile works!</p>
+<app-background>
+    <section class="w-full max-w-md bg-gray-900 bg-opacity-70 p-6 rounded-xl shadow-xl text-center text-white flex flex-col items-center mt-12">
+        <h2 class="text-2xl font-bold mb-4 tracking-wide text-blue-300 drop-shadow">Quién soy</h2>
+
+        @if (profileGitHub.profile()) {
+            <div class="flex flex-col items-center w-full">
+                <img [src]="profileGitHub.profile()?.avatar_url" alt="Avatar" class="w-24 h-24 rounded-full mb-3 border-4 border-blue-500 shadow-md" />
+                <h3 class="text-lg font-bold mb-1 text-blue-200">{{profileGitHub.profile()?.name}}</h3>
+                <p class="text-blue-400 mb-1 text-base break-all">@{{profileGitHub.profile()?.html_url}}</p>
+                <p class="mb-1 italic text-gray-200 text-sm">{{profileGitHub.profile()?.bio}}</p>
+                <a [href]="profileGitHub.profile()?.html_url" target="_blank" class="inline-block mt-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium shadow transition text-sm">Ver perfil en GitHub</a>
+            </div>
+        }
+
+        <div class="w-full border-t border-blue-800 my-4"></div>
+
+        <div class="w-full text-left">
+            <h4 class="text-base font-semibold text-blue-300 mb-1">Mi juego propio: Simon Dice</h4>
+            <p class="text-gray-200 text-sm">
+                Elegí <span class="font-bold text-blue-400">Simon Dice</span> porque es un clásico que desafía la memoria y la atención. El objetivo es repetir la secuencia de colores y sonidos que muestra el juego, la cual se va haciendo cada vez más larga. ¡Poné a prueba tu memoria y superá tu propio récord!
+            </p>
+        </div>
+    </section>
+</app-background>
