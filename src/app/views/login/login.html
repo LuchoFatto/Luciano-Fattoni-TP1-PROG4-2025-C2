@@ -1,23 +1,39 @@
 <app-background>
-    <form class="w-full max-w-sm bg-gray-900 bg-opacity-40 p-8 rounded-lg shadow-lg text-white">
+    <form class="w-full max-w-sm bg-gray-900 bg-opacity-40 p-8 rounded-lg shadow-lg text-white" [formGroup]="formsLogin"
+        (ngSubmit)="enviarFormsLogin()">
         <div class="mb-5">
             <label for="email" class="block mb-2 text-sm font-medium text-white">Email</label>
             <input type="email" id="email"
                 class="bg-gray-800 bg-opacity-60 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-gray-300"
-                placeholder="name@flowbite.com" required />
+                placeholder="name@flowbite.com" formControlName="email" required />
+            @if (email?.touched && email?.invalid){
+            <div id="error" class="mt-2 text-xs text-red-600 dark:text-red-400">
+                @if (email?.errors?.["required"]) {Campo obligatorio}
+                @if (email?.errors?.["email"]) {Debe ser un mail: @example.com}
+            </div>
+            }
         </div>
         <div class="mb-5">
             <label for="password" class="block mb-2 text-sm font-medium text-white">Password</label>
             <input type="password" id="password"
                 class="bg-gray-800 bg-opacity-60 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-gray-300"
-                required />
+                formControlName="password" required />
+            @if (password?.touched && password?.invalid){
+            <div id="error" class="mt-2 text-xs text-red-600 dark:text-red-400">
+                @if (password?.errors?.["required"]) {Campo obligatorio}
+                @if (password?.errors?.["pattern"]) {Debe contener: 1 caracter especial, mayuscula, minuscula, numero y
+                minimo largo 10}
+            </div>
+            }
         </div>
         <div class="flex items-start mb-5">
             <div class="flex items-center h-5">
-                <a routerLink="/register" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">¿No tenes cuenta? Registrate</a>
+                <a routerLink="/register" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">¿No tenes
+                    cuenta? Registrate</a>
             </div>
         </div>
         <button type="submit"
-            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">Submit</button>
+            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center"
+            [disabled]="!this.formsLogin.valid" >Submit</button>
     </form>
 </app-background>
