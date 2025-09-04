@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Background } from '../../components/background/background';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { Supabase } from '../../services/supabase/supabase';
 
 @Component({
     selector: 'app-register',
@@ -46,8 +47,11 @@ export class Register {
         return control.value === password ? null : { equal: true };
     }
 
-    enviarFormsRegister() {
-        console.log(this.formsRegister)
-        console.log(this.formsRegister.value)
+    protected supabaseServices = inject(Supabase)
+
+    crearCuenta() {
+        const emailValue = this.email?.value!;
+        const passwordValue = this.password?.value!;
+        this.supabaseServices.createAccount(emailValue, passwordValue);
     }
 }

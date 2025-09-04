@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Background } from '../../components/background/background';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Supabase } from '../../services/supabase/supabase';
 
 @Component({
     selector: 'app-login',
@@ -27,6 +28,14 @@ export class Login {
     get password() {
         return this.formsLogin.get("password");
     };
+
+    protected supabaseServices = inject(Supabase)
+
+    iniciarSesion() {
+        const emailValue = this.email?.value!;
+        const passwordValue = this.password?.value!;
+        this.supabaseServices.signIn(emailValue, passwordValue);
+    }
 }
 
 
