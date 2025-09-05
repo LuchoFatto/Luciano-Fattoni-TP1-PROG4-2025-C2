@@ -1,6 +1,12 @@
 import { Injectable, WritableSignal, signal } from '@angular/core';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 
+export interface AuthResult {
+    success: boolean;
+    error?: string;
+    data?: any;
+}
+
 @Injectable({
     providedIn: 'root',
 })
@@ -22,31 +28,70 @@ export class Supabase {
         });
     }
 
-    async createAccount(email: string, password: string) {
+    async createAccount(email: string, password: string): Promise<AuthResult> {
         const response = await this.supabase.auth.signUp({
             email: email,
             password: password,
         });
 
         if (response.error) {
-            console.log(response.error);
-            return;
+            let errorMessage = '';
+            switch (response.error.message) {
+                case 'User already registered':
+                case 'Email already registered':
+                    errorMessage = 'Este email ya está registrado. Intenta iniciar sesión';
+                    break;
+                case 'Password should be at least 6 characters':
+                    errorMessage = 'La contraseña debe tener al menos 6 caracteres';
+                    break;
+                case 'Invalid email':
+                    errorMessage = 'Por favor ingresa un email válido';
+                    break;
+                case 'Password is too weak':
+                    errorMessage = 'La contraseña es muy débil. Debe incluir mayúsculas, minúsculas, números y símbolos';
+                    break;
+                default:
+                    errorMessage = 'Error al crear la cuenta. Intenta nuevamente';
+                    break;
+            }
+            return {
+                success: false,
+                error: errorMessage
+            };
         } else {
-            console.log(response.data);
+            return {
+                success: true,
+                data: response.data
+            };
         }
     }
 
-    async signIn(email: string, password: string) {
+    async signIn(email: string, password: string): Promise<AuthResult> {
         const response = await this.supabase.auth.signInWithPassword({
             email: email,
             password: password,
         });
 
         if (response.error) {
-            console.log(response.error);
-            return;
+            let errorMessage = '';
+            switch (response.error.message) {
+                case 'Invalid login credentials':
+                case 'Invalid credentials':
+                    errorMessage = 'Email o contraseña incorrectos';
+                    break;
+                default:
+                    errorMessage = 'Error al iniciar sesión. Intenta nuevamente';
+                    break;
+            }
+            return {
+                success: false,
+                error: errorMessage
+            };
         } else {
-            console.log(response.data);
+            return {
+                success: true,
+                data: response.data
+            };
         }
     }
 

@@ -2,6 +2,8 @@ import { Component, inject } from '@angular/core';
 import { Background } from '../../components/background/background';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Supabase } from '../../services/supabase/supabase';
+import { Router } from '@angular/router';
+import { Alerts } from '../../services/alerts';
 
 @Component({
     selector: 'app-register',
@@ -47,11 +49,18 @@ export class Register {
         return control.value === password ? null : { equal: true };
     }
 
-    protected supabaseServices = inject(Supabase)
+    protected supabaseServices = inject(Supabase);
+    protected router = inject(Router);
+    protected alert = inject(Alerts);
 
-    crearCuenta() {
-        const emailValue = this.email?.value!;
-        const passwordValue = this.password?.value!;
-        this.supabaseServices.createAccount(emailValue, passwordValue);
+    async crearCuenta() {
+        const response = await this.supabaseServices.createAccount(this.email?.value!, this.password?.value!);
+
+        if (response.success) {
+            this.alert.showToastSuccess("Registro de usuario exitoso!");
+            this.router.navigate(['/login']);
+        } else {
+            this.alert.showToastError(response.error || "Error desconocido");
+        }
     }
 }
