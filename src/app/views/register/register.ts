@@ -57,8 +57,14 @@ export class Register {
         const response = await this.supabaseServices.createAccount(this.email?.value!, this.password?.value!);
 
         if (response.success) {
-            this.alert.showToastSuccess("Registro de usuario exitoso!");
-            this.router.navigate(['/login']);
+            const loginResponse = await this.supabaseServices.signIn(this.email?.value!, this.password?.value!)
+            if (loginResponse.success) {
+                this.alert.showToastSuccess("¡Registro exitoso! Sesión iniciada automáticamente");
+                this.router.navigate(['/bienvenida']);
+            } else {
+                this.alert.showToastError('Error en auto-login, ingrese manualmente')
+                this.router.navigate(['/login']);
+            }
         } else {
             this.alert.showToastError(response.error || "Error desconocido");
         }

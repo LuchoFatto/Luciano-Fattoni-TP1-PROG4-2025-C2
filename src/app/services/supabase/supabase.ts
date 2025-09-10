@@ -11,8 +11,8 @@ export interface AuthResult {
     providedIn: 'root',
 })
 export class Supabase {
-    private url = "https://acburboiifftuvdtgbtc.supabase.co"
-    private key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjYnVyYm9paWZmdHV2ZHRnYnRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NTA3OTksImV4cCI6MjA3MjUyNjc5OX0.sgCHpmUXJxwh_lipM9rb4ng1xxkWQ1nIUlRAeVkH3YI"
+    private url = "https://infiqqohdyefnfodtnrn.supabase.co"
+    private key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImluZmlxcW9oZHllZm5mb2R0bnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNzM5MzEsImV4cCI6MjA3Mjc0OTkzMX0.kYrBqRXv8oi9z0D-iow_oN0r6NoSw_RDZFlmbf1IYsI"
 
     private supabase: SupabaseClient<any, "public", "public", any, any>;
 

@@ -19,6 +19,11 @@ export const routes: Routes = [
     },
     {
         path: "",
-        loadComponent: () => import('./views/home/home').then((archivo) => archivo.Home),
+        redirectTo: 'bienvenida',
+        pathMatch: 'full',
     },
+    {
+        path: '**',
+        loadComponent: () => import('./components/error/error').then((archivo) => archivo.Error),
+    }
 ];

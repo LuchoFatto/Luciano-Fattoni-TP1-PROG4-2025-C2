@@ -34,6 +34,41 @@ export class Login {
     protected router = inject(Router);
     protected alert = inject(Alerts);
 
+    usuariosRetro = [
+        {
+            email: 'arcade@retro.com',
+            password: 'Arcade123!',
+            nombre: 'Arcade Master',
+            icono: '🕹️',
+            descripcion: 'Domina todos los juegos'
+        },
+        {
+            email: 'pixel@retro.com',
+            password: 'Pixel123!',
+            nombre: 'Pixel Hero',
+            icono: '👾',
+            descripcion: 'Aventurero de mundos'
+        },
+        {
+            email: 'speed@retro.com',
+            password: 'Speed123!',
+            nombre: 'Speed Runner',
+            icono: '⚡',
+            descripcion: 'Velocidad máxima'
+        }
+    ];
+
+    async loginRapido(usuario: any) {
+        const response = await this.supabaseServices.signIn(usuario.email, usuario.password)
+
+        if (response.success) {
+            this.alert.showToastSuccess(`¡Bienvenido ${usuario.nombre}!`);
+            this.router.navigate(['/bienvenida']);
+        } else {
+            this.alert.showToastError(`Error al iniciar sesion con ${usuario.nombre}`);
+        }
+    }
+
     async iniciarSesion() {
         const response = await this.supabaseServices.signIn(this.email?.value!, this.password?.value!);
 
