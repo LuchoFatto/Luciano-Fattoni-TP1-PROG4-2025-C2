@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
     {
-        path: "bienvenida",
+        path: "home",
         loadComponent: () => import('./views/home/home').then((archivo) => archivo.Home),
     },
     {
@@ -18,12 +18,17 @@ export const routes: Routes = [
         loadComponent: () => import('./views/profile/profile').then((archivo) => archivo.Profile),
     },
     {
+        path: "games",
+        loadComponent: () => import('./views/games/games').then((archivo) => archivo.Games),
+    },
+    {
         path: "",
-        redirectTo: 'bienvenida',
+        redirectTo: 'home',
         pathMatch: 'full',
     },
     {
         path: '**',
         loadComponent: () => import('./components/error/error').then((archivo) => archivo.Error),
+        pathMatch: 'full',
     }
 ];

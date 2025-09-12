@@ -1,5 +1,6 @@
-import { Injectable, WritableSignal, signal } from '@angular/core';
+import { Injectable, WritableSignal, inject, signal } from '@angular/core';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import { User as UserTable } from '../../interfaces/user';
 
 export interface AuthResult {
     success: boolean;
@@ -10,6 +11,7 @@ export interface AuthResult {
 @Injectable({
     providedIn: 'root',
 })
+
 export class Supabase {
     private url = "https://infiqqohdyefnfodtnrn.supabase.co"
     private key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImluZmlxcW9oZHllZm5mb2R0bnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNzM5MzEsImV4cCI6MjA3Mjc0OTkzMX0.kYrBqRXv8oi9z0D-iow_oN0r6NoSw_RDZFlmbf1IYsI"
@@ -17,6 +19,8 @@ export class Supabase {
     private supabase: SupabaseClient<any, "public", "public", any, any>;
 
     public usuarioActual: WritableSignal<User | null> = signal<User | null>(null);
+    public datosUsuario: WritableSignal<UserTable | null> = signal<UserTable | null>(null);
+
 
     constructor() {
         this.supabase = createClient(this.url, this.key);
@@ -26,7 +30,15 @@ export class Supabase {
             console.log(session);
             this.usuarioActual.set(session !== null ? session.user : null);
         });
-    }
+    };
+
+    get client(): SupabaseClient {
+        return this.supabase;
+    };
+
+    setDatosUsuario(usuario: UserTable | null) {
+        this.datosUsuario.set(usuario)
+    };
 
     async createAccount(email: string, password: string): Promise<AuthResult> {
         const response = await this.supabase.auth.signUp({
@@ -63,8 +75,8 @@ export class Supabase {
                 success: true,
                 data: response.data
             };
-        }
-    }
+        };
+    };
 
     async signIn(email: string, password: string): Promise<AuthResult> {
         const response = await this.supabase.auth.signInWithPassword({
@@ -82,7 +94,7 @@ export class Supabase {
                 default:
                     errorMessage = 'Error al iniciar sesión. Intenta nuevamente';
                     break;
-            }
+            };
             return {
                 success: false,
                 error: errorMessage
@@ -92,10 +104,10 @@ export class Supabase {
                 success: true,
                 data: response.data
             };
-        }
-    }
+        };
+    };
 
     async signOut() {
         this.supabase.auth.signOut();
-    }
-}
+    };
+};

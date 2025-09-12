@@ -4,6 +4,7 @@ import { Background } from '../../components/background/background';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Supabase } from '../../services/supabase/supabase';
 import { Alerts } from '../../services/alerts';
+import { UserService } from '../../services/supabase/user.service';
 
 @Component({
     selector: 'app-login',
@@ -33,6 +34,7 @@ export class Login {
     protected supabaseServices = inject(Supabase);
     protected router = inject(Router);
     protected alert = inject(Alerts);
+    protected userService = inject(UserService);
 
     usuariosRetro = [
         {
@@ -62,8 +64,10 @@ export class Login {
         const response = await this.supabaseServices.signIn(usuario.email, usuario.password)
 
         if (response.success) {
-            this.alert.showToastSuccess(`¡Bienvenido ${usuario.nombre}!`);
-            this.router.navigate(['/bienvenida']);
+            const usuario = await this.userService.getUserByAuthId(response.data.user.id);
+            this.supabaseServices.setDatosUsuario(usuario);
+            this.alert.showToastSuccess(`¡Bienvenido ${usuario?.nombre}!`);
+            this.router.navigate(['/home']);
         } else {
             this.alert.showToastError(`Error al iniciar sesion con ${usuario.nombre}`);
         }
@@ -73,12 +77,14 @@ export class Login {
         const response = await this.supabaseServices.signIn(this.email?.value!, this.password?.value!);
 
         if (response.success) {
+            const usuario = await this.userService.getUserByAuthId(response.data.user.id);
+            this.supabaseServices.setDatosUsuario(usuario);
             this.alert.showToastSuccess("¡Bienvenido! Inicio de sesión exitoso");
-            this.router.navigate(['/bienvenida']);
+            this.router.navigate(['/home']);
         } else {
             this.alert.showToastError(response.error || "Error desconocido");
-        }
-    }
-}
+        };
+    };
+};
 
 

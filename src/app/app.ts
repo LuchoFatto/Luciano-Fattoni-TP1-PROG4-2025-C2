@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { Supabase } from './services/supabase/supabase';
+import { Alerts } from './services/alerts';
 
 @Component({
     selector: 'app-root',
@@ -11,10 +12,12 @@ import { Supabase } from './services/supabase/supabase';
 export class App {
     protected readonly title = signal('Luciano-Fattoni-TP1_PROG4_2025_C2');
 
-    protected supabaseServices = inject(Supabase)
+    protected supabaseServices = inject(Supabase);
+    protected alerts = inject(Alerts);
 
     cerrarSesion() {
         this.supabaseServices.signOut();
-    }
-
-}
+        this.supabaseServices.setDatosUsuario(null);
+        this.alerts.showToastSuccess("¡Sesion cerrada correctamente!")
+    };
+};
