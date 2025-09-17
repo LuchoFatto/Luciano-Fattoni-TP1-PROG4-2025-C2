@@ -15,9 +15,8 @@ export class App {
     protected supabaseServices = inject(Supabase);
     protected alerts = inject(Alerts);
 
-    cerrarSesion() {
-        this.supabaseServices.signOut();
-        this.supabaseServices.setDatosUsuario(null);
+    async cerrarSesion() {
+        await this.supabaseServices.signOutUser();
         this.alerts.showToastSuccess("¡Sesion cerrada correctamente!")
     };
 };

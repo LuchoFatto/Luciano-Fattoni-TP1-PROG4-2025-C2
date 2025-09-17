@@ -25,12 +25,43 @@ export class Supabase {
     constructor() {
         this.supabase = createClient(this.url, this.key);
 
-        this.supabase.auth.onAuthStateChange((event, session) => {
+        this.supabase.auth.onAuthStateChange(async (event, session) => {
             console.log(event);
             console.log(session);
-            this.usuarioActual.set(session !== null ? session.user : null);
+            this.usuarioActual.set(session?.user || null);
+
+            if (session && session?.user) {
+                setTimeout(async () => {
+                    await this.cargarDatosUser(session.user.id);
+                }, 100);
+            } else if (!session) {
+                this.setDatosUsuario(null);
+            }
         });
     };
+
+    private async cargarDatosUser(userId: string): Promise<void> {
+        try {
+            const { data, error } = await this.supabase
+                .from('usuarios')
+                .select('*')
+                .eq('auth_id', userId)
+                .single()
+
+            if (error) {
+                console.error('Error al consultar usuarios:', error);
+                return;
+            }
+
+            if (data) {
+                this.datosUsuario.set(data as UserTable);
+            } else {
+                console.log('No se encontraron datos del usuario');
+            }
+        } catch (catchError) {
+            console.error('Error en cargarDatosUser:', catchError);
+        }
+    }
 
     get client(): SupabaseClient {
         return this.supabase;
@@ -107,7 +138,7 @@ export class Supabase {
         };
     };
 
-    async signOut() {
-        this.supabase.auth.signOut();
+    async signOutUser() {
+        await this.supabase.auth.signOut();
     };
 };
