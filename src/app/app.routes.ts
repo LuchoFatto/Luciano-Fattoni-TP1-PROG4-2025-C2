@@ -34,7 +34,7 @@ export const routes: Routes = [
     {
         path: "games/mayor-menor",
         loadComponent: () => import('./views/games/mayor-menor/mayor-menor').then((archivo) => archivo.MayorMenor),
-        canActivate: [authGuard],
+        //anActivate: [authGuard],
     },
     {
         path: "",

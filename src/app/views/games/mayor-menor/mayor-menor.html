@@ -1,4 +1,180 @@
 <app-background>
-    <h1>🃏 Mayor o Menor</h1>
-    <p>Aquí irá el juego mayor o menor</p>
+    <!-- Espaciado para el header fijo -->
+    <div class="pt-20 pb-6">
+        <!-- Contenedor con tamaño fijo -->
+        <div class="w-full max-w-7xl mx-auto p-6">
+            <!-- Contenedor principal con altura fija -->
+            <div class="w-full h-[calc(100vh-4rem)] max-h-[700px] min-h-[600px]">
+                <!-- Grid más flexible que use todo el ancho -->
+                <div class="h-full grid grid-cols-[8fr_3fr] gap-3">
+
+                    <!-- Columna principal del juego (flexible) -->
+                    <div class="h-full overflow-hidden">
+                        <div class="bg-gray-900 bg-opacity-40 p-6 rounded-lg shadow-lg text-white h-full flex flex-col">
+
+                            <!-- Header del juego -->
+                            <div class="text-center mb-4 flex-shrink-0">
+                                <h1 class="text-xl font-bold mb-2 text-blue-300">Mayor o Menor</h1>
+                                <p class="text-gray-400 text-sm">Predice si la siguiente carta será mayor o menor</p>
+                            </div>
+
+                            <!-- Estado del juego -->
+                            <div class="text-center mb-4 flex-shrink-0">
+                                <div class="text-2xl font-bold mb-2 text-blue-300">
+                                    {{ obtenerEstadoTexto() }}
+                                </div>
+                            </div>
+
+                            <!-- Carta Actual -->
+                            @if (estado().cartaActual > 0) {
+                            <div class="text-center mb-6 flex-shrink-0">
+                                <div class="inline-block bg-white rounded-xl p-8 shadow-2xl border-2 border-gray-200">
+                                    <div class="text-3xl font-bold text-gray-800">
+                                        {{ obtenerNombreCarta(estado().cartaActual) }}
+                                    </div>
+                                    <div class="text-lg text-gray-600 mt-2">
+                                        Valor: {{ estado().cartaActual }}
+                                    </div>
+                                </div>
+                            </div>
+                            }
+
+                            <!-- Botones de Juego -->
+                            @if (!estado().terminado && estado().cartaActual > 0) {
+                            <div class="flex gap-4 justify-center mb-6 flex-shrink-0">
+                                <button (click)="apostarMenor()"
+                                    class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
+                                    MENOR
+                                </button>
+
+                                <button (click)="apostarMayor()"
+                                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
+                                    MAYOR
+                                </button>
+                            </div>
+                            }
+
+                            <!-- Estado del Juego -->
+                            <div class="bg-gray-800/50 backdrop-blur rounded-xl p-4 space-y-3 mb-6 flex-shrink-0">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white font-semibold">Puntaje:</span>
+                                    <span class="text-2xl font-bold text-green-400">{{ estado().puntaje }}</span>
+                                </div>
+
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white font-semibold">Errores:</span>
+                                    <span class="text-xl font-bold text-red-400">
+                                        {{ estado().errores }}/{{ estado().erroresMaximos }}
+                                    </span>
+                                </div>
+
+                                <!-- Barra de errores -->
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-red-500 h-2 rounded-full transition-all duration-300"
+                                        [style.width.%]="(estado().errores / estado().erroresMaximos) * 100">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botón Nuevo Juego -->
+                            <div class="text-center mb-4 flex-shrink-0">
+                                <button (click)="iniciarJuego()"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
+                                    {{ estado().cartaActual === 0 ? 'Iniciar Juego' : 'Nuevo Juego' }}
+                                </button>
+                            </div>
+
+                            <!-- Mensaje Final -->
+                            @if (estado().terminado) {
+                            <div
+                                class="text-center bg-gradient-to-r from-purple-900/50 to-blue-900/50 backdrop-blur rounded-xl p-4 flex-shrink-0">
+                                <div class="text-2xl font-bold text-white mb-2">
+                                    ¡Partida Terminada!
+                                </div>
+                                <div class="text-lg text-gray-300">
+                                    Puntaje final: <span class="text-yellow-400 font-bold">{{ estado().puntaje }}</span>
+                                </div>
+                                <div class="text-sm text-gray-400 mt-2">
+                                    Partida guardada automáticamente
+                                </div>
+                            </div>
+                            }
+
+                        </div>
+                    </div>
+
+                    <!-- Columna lateral derecha (1 columna) -->
+                    <div class="h-full flex flex-col gap-6 overflow-hidden">
+
+                        <!-- Estadísticas generales -->
+                        @if (usuarioLogueado() && partidas().length > 0) {
+                        <div class="bg-gray-900 bg-opacity-40 p-6 rounded-lg shadow-lg text-white flex-shrink-0">
+                            <h3 class="text-lg font-bold mb-4 text-center text-blue-300">Estadísticas</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Mejor puntaje:</span>
+                                    <span class="text-yellow-400 font-bold">{{ obtenerMejorPuntaje() }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Promedio:</span>
+                                    <span class="text-green-400 font-bold">{{ obtenerPromedioPuntaje() }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Partidas jugadas:</span>
+                                    <span class="text-blue-400 font-bold">{{ partidas().length }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Partidas ganadas:</span>
+                                    <span class="text-purple-400 font-bold">{{ obtenerPartidasGanadas() }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        }
+
+                        <!-- Últimas partidas -->
+                        @if (partidas().length > 0) {
+                        <div
+                            class="bg-gray-900 bg-opacity-40 p-6 rounded-lg shadow-lg text-white flex-1 min-h-0 overflow-hidden flex flex-col">
+                            <h3 class="text-lg font-bold mb-4 text-center text-blue-300">Últimas Partidas</h3>
+                            <div class="flex-1 overflow-y-auto">
+                                <div class="space-y-3">
+                                    @for (partida of partidas().slice(0, 8); track partida.id) {
+                                    <div class="bg-black bg-opacity-30 p-3 rounded border-l-4"
+                                        [class]="partida.ganado ? 'border-green-500' : 'border-red-500'">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <div class="text-sm font-bold"
+                                                    [class]="partida.ganado ? 'text-green-400' : 'text-red-400'">
+                                                    Puntaje: {{ partida.puntaje }}
+                                                </div>
+                                                <div class="text-xs text-gray-400">
+                                                    {{ partida.intentos }} jugadas
+                                                </div>
+                                            </div>
+                                            <div class="text-xs text-gray-500">
+                                                {{ formatearFecha(partida.fecha) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        }
+
+                        <!-- Info para nuevos usuarios -->
+                        @if (partidas().length === 0 && usuarioLogueado()) {
+                        <div
+                            class="bg-gray-900 bg-opacity-40 p-6 rounded-lg shadow-lg text-white text-center flex-1 flex flex-col justify-center">
+                            <h3 class="text-lg font-bold mb-2 text-blue-300">¡Empezar!</h3>
+                            <p class="text-gray-400 text-sm">
+                                Completa tu primera partida para ver tus estadísticas aquí
+                            </p>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </app-background>
