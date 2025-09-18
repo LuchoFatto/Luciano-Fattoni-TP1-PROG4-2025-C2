@@ -57,7 +57,15 @@ export class Register {
     protected userService = inject(UserService);
 
     async crearCuenta() {
-        const response = await this.supabaseServices.createAccount(this.email?.value!, this.password?.value!);
+        const userDataPassword: CreateUserData = {
+            nombre: this.name?.value!,
+            apellido: this.surname?.value!,
+            edad: Number(this.age?.value!),
+            email: this.email?.value!,
+            password: this.password?.value!,
+        }
+
+        const response = await this.supabaseServices.createAccount(userDataPassword);
 
         if (response.success) {
             const userData: CreateUserData = {
@@ -71,10 +79,8 @@ export class Register {
             const saveResponse = await this.userService.saveUser(userData);
 
             if (saveResponse.success) {
-                const loginResponse = await this.supabaseServices.signIn(userData.email, this.password?.value!)
+                const loginResponse = await this.supabaseServices.signIn(userDataPassword.email, userDataPassword.password!)
                 if (loginResponse.success) {
-                    const usuario = await this.userService.getUserByAuthId(response.data.user.id);
-                    this.supabaseServices.setDatosUsuario(usuario);
                     this.alert.showToastSuccess("¡Registro exitoso! Sesión iniciada automáticamente");
                     this.router.navigate(['/home']);
                 } else {

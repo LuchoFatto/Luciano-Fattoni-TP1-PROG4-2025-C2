@@ -1,12 +1,14 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { Supabase } from './supabase/supabase';
 import { CrearPartidaAhorcado, EstadoJuegoAhorcado, PartidaAhorcado } from '../interfaces/partida.ahorcado';
+import { UserService } from './supabase/user.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class AhorcadoService {
     private readonly supabase = inject(Supabase);
+    private userService = inject(UserService);
 
     private readonly palabras = [
         // Tecnología Web
@@ -30,7 +32,7 @@ export class AhorcadoService {
         juegoTerminado: false,
         juegoGanado: false,
         tiempoInicio: 0,
-        intentosMaximos: 6
+        intentosMaximos: 7
     });
 
     public readonly partidas = signal<PartidaAhorcado[]>([]);
@@ -99,17 +101,17 @@ export class AhorcadoService {
     // Guardar partida en base de datos
     async guardarPartida(): Promise<void> {
         const estado = this.estadoJuego();
-        const datosUsuario = this.supabase.datosUsuario();
+        const usuarioActual = this.supabase.usuarioActual();
 
-        if (!datosUsuario) {
-            return;
-        }
+        if (!usuarioActual) return;
+
+        const datosUsuario = await this.userService.getUserByAuthId(usuarioActual.id);
 
         const tiempoFinalizacion = Math.floor((Date.now() - estado.tiempoInicio) / 1000); // en segundos
         const totalLetrasSeleccionadas = estado.letrasAdivinadas.length + estado.letrasIncorrectas.length;
 
         const nuevaPartida: CrearPartidaAhorcado = {
-            user_id: datosUsuario.id!.toString(),
+            user_id: datosUsuario!.id!.toString(),
             palabra: estado.palabraSecreta,
             tiempo_finalizacion: tiempoFinalizacion,
             letras_seleccionadas: totalLetrasSeleccionadas,
@@ -134,17 +136,17 @@ export class AhorcadoService {
 
     // Cargar partidas del usuario
     async cargarPartidasUsuario(): Promise<void> {
-        const datosUsuario = this.supabase.datosUsuario();
+        const usuarioActual = this.supabase.usuarioActual();
 
-        if (!datosUsuario) {
-            return;
-        }
+        if (!usuarioActual) return;
+
+        const datosUsuario = await this.userService.getUserByAuthId(usuarioActual.id)
 
         try {
             const { data, error } = await this.supabase.client
                 .from('partidas_ahorcado')
                 .select('*')
-                .eq('user_id', datosUsuario.id)
+                .eq('user_id', datosUsuario!.id)
                 .order('created_at', { ascending: false });
 
             if (error) {

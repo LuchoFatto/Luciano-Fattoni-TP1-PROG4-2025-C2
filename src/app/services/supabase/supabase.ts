@@ -1,6 +1,6 @@
-import { Injectable, WritableSignal, inject, signal } from '@angular/core';
+import { Injectable, WritableSignal, signal } from '@angular/core';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
-import { User as UserTable } from '../../interfaces/user';
+import { CreateUserData } from '../../interfaces/user';
 
 export interface AuthResult {
     success: boolean;
@@ -19,62 +19,48 @@ export class Supabase {
     private supabase: SupabaseClient<any, "public", "public", any, any>;
 
     public usuarioActual: WritableSignal<User | null> = signal<User | null>(null);
-    public datosUsuario: WritableSignal<UserTable | null> = signal<UserTable | null>(null);
-
 
     constructor() {
         this.supabase = createClient(this.url, this.key);
 
-        this.supabase.auth.onAuthStateChange(async (event, session) => {
+        this.supabase.auth.onAuthStateChange((event, session) => {
             console.log(event);
             console.log(session);
             this.usuarioActual.set(session?.user || null);
-
-            if (session && session?.user) {
-                setTimeout(async () => {
-                    await this.cargarDatosUser(session.user.id);
-                }, 100);
-            } else if (!session) {
-                this.setDatosUsuario(null);
-            }
         });
     };
-
-    private async cargarDatosUser(userId: string): Promise<void> {
-        try {
-            const { data, error } = await this.supabase
-                .from('usuarios')
-                .select('*')
-                .eq('auth_id', userId)
-                .single()
-
-            if (error) {
-                console.error('Error al consultar usuarios:', error);
-                return;
-            }
-
-            if (data) {
-                this.datosUsuario.set(data as UserTable);
-            } else {
-                console.log('No se encontraron datos del usuario');
-            }
-        } catch (catchError) {
-            console.error('Error en cargarDatosUser:', catchError);
-        }
-    }
 
     get client(): SupabaseClient {
         return this.supabase;
     };
 
-    setDatosUsuario(usuario: UserTable | null) {
-        this.datosUsuario.set(usuario)
+    get userName(): string | undefined {
+        return this.usuarioActual()?.user_metadata?.["nombre"];
     };
 
-    async createAccount(email: string, password: string): Promise<AuthResult> {
+    get userSurname(): string | undefined {
+        return this.usuarioActual()?.user_metadata?.["apellido"];
+    };
+
+    get userEmail(): string | undefined {
+        return this.usuarioActual()?.user_metadata?.["email"];
+    };
+
+    get userAge(): number | undefined {
+        return this.usuarioActual()?.user_metadata?.["edad"];
+    };
+
+    async createAccount(datos: CreateUserData): Promise<AuthResult> {
         const response = await this.supabase.auth.signUp({
-            email: email,
-            password: password,
+            email: datos.email,
+            password: datos.password!,
+            options: {
+                data: {
+                    nombre: datos.nombre,
+                    apellido: datos.apellido,
+                    edad: datos.edad,
+                }
+            }
         });
 
         if (response.error) {

@@ -3,7 +3,6 @@ import { Background } from '../../components/background/background';
 import { RouterLink } from '@angular/router';
 import { ChatService } from '../../services/chat.service';
 import { Supabase } from '../../services/supabase/supabase';
-import { CrearMensaje } from '../../interfaces/mensaje';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -24,10 +23,6 @@ export class Games {
 
     get usuarioLogueado() {
         return this.supabase.usuarioActual;
-    }
-
-    get datosUsuario() {
-        return this.supabase.datosUsuario;
     }
 
     formatearHora(fechaString?: string): string {
@@ -54,28 +49,20 @@ export class Games {
     async enviarMensaje(): Promise<void> {
         const mensaje = this.textoMensaje().trim();
         const usuario = this.usuarioLogueado();
-        const datos = this.datosUsuario();
 
         // Validaciones
         if (!mensaje) {
             return
         };
 
-        if (!usuario || !datos) {
+        if (!usuario) {
             console.error('Usuario no autenticado o datos no disponibles');
             return;
         }
 
-        // Crear objeto de mensaje
-        const nuevoMensaje: CrearMensaje = {
-            user_id: datos.id!.toString(),
-            usuario_nombre: `${datos.nombre} ${datos.apellido}`,
-            mensaje: mensaje
-        };
-
         try {
             // Enviar mensaje
-            await this.chatService.enviarMensaje(nuevoMensaje);
+            await this.chatService.enviarMensaje(mensaje);
 
             // Limpiar input
             this.textoMensaje.set('');
@@ -83,5 +70,4 @@ export class Games {
             console.error('Error al enviar mensaje:', error);
         }
     }
-
 }

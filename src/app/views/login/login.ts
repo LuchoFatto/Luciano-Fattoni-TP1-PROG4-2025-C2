@@ -64,12 +64,17 @@ export class Login {
         const response = await this.supabaseServices.signIn(usuario.email, usuario.password)
 
         if (response.success) {
-            const usuario = await this.userService.getUserByAuthId(response.data.user.id);
-            this.supabaseServices.setDatosUsuario(usuario);
-            this.alert.showToastSuccess(`¡Bienvenido ${usuario?.nombre}!`);
+            if (!this.supabaseServices.userName) {
+                await this.supabaseServices.client.auth.updateUser({
+                    data: {
+                        nombre: usuario.nombre,
+                    }
+                });
+            }
+            this.alert.showToastSuccess(`¡Bienvenido ${this.supabaseServices.userName}!`);
             this.router.navigate(['/home']);
         } else {
-            this.alert.showToastError(`Error al iniciar sesion con ${usuario.nombre}`);
+            this.alert.showToastError(response.error || "Error desconocido");
         }
     }
 
@@ -77,8 +82,6 @@ export class Login {
         const response = await this.supabaseServices.signIn(this.email?.value!, this.password?.value!);
 
         if (response.success) {
-            const usuario = await this.userService.getUserByAuthId(response.data.user.id);
-            this.supabaseServices.setDatosUsuario(usuario);
             this.alert.showToastSuccess("¡Bienvenido! Inicio de sesión exitoso");
             this.router.navigate(['/home']);
         } else {

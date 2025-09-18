@@ -61,10 +61,6 @@ export class Ahorcado implements OnInit {
         return this.supabase.usuarioActual;
     }
 
-    get datosUsuario() {
-        return this.supabase.datosUsuario;
-    }
-
     // Métodos del juego
     iniciarNuevoJuego(): void {
         this.ahorcadoService.iniciarJuego();

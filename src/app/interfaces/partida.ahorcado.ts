@@ -1,3 +1,4 @@
+// Solo para lectura (Promise)
 export interface PartidaAhorcado {
     id?: string;
     user_id: string;
@@ -8,6 +9,7 @@ export interface PartidaAhorcado {
     created_at?: string;
 }
 
+// Solo lo que enviamos
 export interface CrearPartidaAhorcado {
     user_id: string;
     palabra: string;

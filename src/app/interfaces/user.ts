@@ -1,4 +1,4 @@
-// Solo para lectura (Promise)
+// Solo para lectura (Promise) "solo para persistencia" TABLA
 export interface User {
     id?: number;
     auth_id: string;
@@ -12,9 +12,10 @@ export interface User {
 
 // Solo lo que enviamos
 export interface CreateUserData {
-    auth_id: string;
+    auth_id?: string;
     nombre: string;
     apellido: string;
     edad: number;
     email: string;
+    password?: string;
 }

@@ -1,12 +1,14 @@
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { Supabase } from './supabase/supabase';
 import { CrearMensaje, Mensaje } from '../interfaces/mensaje';
+import { UserService } from './supabase/user.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ChatService {
     private supabase = inject(Supabase);
+    private userService = inject(UserService);
     private destroyRef = inject(DestroyRef);
 
     public mensajes = signal<Mensaje[]>([]);
@@ -20,7 +22,6 @@ export class ChatService {
         this.destroyRef.onDestroy(() => {
             this.canal.unsubscribe()
         })
-
     }
 
     async cargarMensajes(): Promise<void> {
@@ -41,7 +42,26 @@ export class ChatService {
         }
     }
 
-    async enviarMensaje(nuevoMensaje: CrearMensaje): Promise<void> {
+    async enviarMensaje(mensajeTexto: string): Promise<void> {
+        const usuarioActual = this.supabase.usuarioActual()
+
+        if (!usuarioActual) {
+            console.error('Usuario no autenticado');
+            return;
+        }
+
+        const datosUsuario = await this.userService.getUserByAuthId(usuarioActual.id);
+        if (!datosUsuario) {
+            console.error('No se encontró el usuario persistente');
+            return;
+        }
+
+        const nuevoMensaje: CrearMensaje = {
+            user_id: datosUsuario.id!.toString(),
+            usuario_nombre: `${datosUsuario.nombre} ${datosUsuario.apellido}`,
+            mensaje: mensajeTexto
+        };
+
         try {
             const { error } = await this.supabase.client
                 .from('chat_messages')

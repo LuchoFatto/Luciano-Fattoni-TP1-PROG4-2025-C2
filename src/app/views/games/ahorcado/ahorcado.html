@@ -2,140 +2,146 @@
     <!-- Espaciado para el header fijo -->
     <div class="pt-20 pb-6">
         <div class="max-w-6xl mx-auto p-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            <!-- Contenedor general: limita la altura total y evita que la página se estire -->
+            <div class="game-container max-h-[calc(100vh-5rem)] w-full overflow-hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch h-full">
 
-                <!-- Columna principal del juego (2/3 del ancho) -->
-                <div class="lg:col-span-2">
-                    <div class="bg-gray-900 bg-opacity-40 p-8 rounded-lg shadow-lg text-white h-full flex flex-col">
+                    <!-- Columna principal del juego (2/3 del ancho) -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-gray-900 bg-opacity-40 p-8 rounded-lg shadow-lg text-white h-full flex flex-col">
 
-                        <!-- Header del juego -->
-                        <div class="text-center mb-6">
-                            <h1 class="text-xl font-bold mb-2 text-blue-300">Juego del Ahorcado</h1>
-                            <p class="text-gray-400 text-sm">Adivina la palabra letra por letra</p>
-                        </div>
-
-                        <!-- Estado del juego -->
-                        <div class="text-center mb-6">
-                            <div class="text-2xl font-bold mb-2 text-blue-300">
-                                {{obtenerEstadoTexto()}}
+                            <!-- Header del juego -->
+                            <div class="text-center mb-6">
+                                <h1 class="text-xl font-bold mb-2 text-blue-300">Juego del Ahorcado</h1>
+                                <p class="text-gray-400 text-sm">Adivina la palabra letra por letra</p>
                             </div>
-                            @if (!estadoJuego().juegoTerminado) {
-                            <div class="text-gray-400">
-                                {{obtenerIntentosRestantes()}} / {{estadoJuego().intentosMaximos}} intentos restantes
-                            </div>
-                            }
-                        </div>
 
-                        <!-- Palabra a adivinar -->
-                        <div class="text-center mb-8">
-                            <div
-                                class="text-4xl font-mono font-bold tracking-widest text-white mb-4 bg-black bg-opacity-30 p-6 rounded-lg">
-                                {{obtenerPalabraMostrar()}}
-                            </div>
-                            @if (estadoJuego().juegoTerminado && !estadoJuego().juegoGanado) {
-                            <div class="text-lg text-red-400">
-                                La palabra era: <span class="font-bold">{{estadoJuego().palabraSecreta}}</span>
-                            </div>
-                            }
-                        </div>
-
-                        <!-- Botones del abecedario -->
-                        <div class="mb-6">
-                            <h3 class="text-lg font-bold mb-4 text-center text-blue-300">Selecciona una letra:</h3>
-                            <div class="grid grid-cols-6 md:grid-cols-9 gap-2">
-                                @for (letra of abecedario; track letra) {
-                                <button class="min-h-12 min-w-12 p-3 rounded font-bold text-white transition-all duration-200 
-                                                hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500
-                                                {{letraSeleccionada(letra) ? 
-                                                    (letraCorrecta(letra) ? 'bg-green-600 border border-green-500 cursor-not-allowed opacity-70' : 'bg-red-600 border border-red-500 cursor-not-allowed opacity-70') : 
-                                                    'bg-gray-700 hover:bg-gray-600 border border-gray-500'}}"
-                                    (click)="seleccionarLetra(letra)"
-                                    [disabled]="letraSeleccionada(letra) || estadoJuego().juegoTerminado">
-                                    {{letra}}
-                                </button>
+                            <!-- Estado del juego -->
+                            <div class="text-center mb-6">
+                                <div class="text-2xl font-bold mb-2 text-blue-300">
+                                    {{obtenerEstadoTexto()}}
+                                </div>
+                                @if (!estadoJuego().juegoTerminado) {
+                                <div class="text-gray-400">
+                                    {{obtenerIntentosRestantes()}} / {{estadoJuego().intentosMaximos}} intentos
+                                    restantes
+                                </div>
                                 }
                             </div>
+
+                            <!-- Palabra a adivinar -->
+                            <div class="text-center mb-8">
+                                <div
+                                    class="text-4xl font-mono font-bold tracking-widest text-white mb-4 bg-black bg-opacity-30 p-6 rounded-lg">
+                                    {{obtenerPalabraMostrar()}}
+                                </div>
+                                @if (estadoJuego().juegoTerminado && !estadoJuego().juegoGanado) {
+                                <div class="text-lg text-red-400">
+                                    La palabra era: <span class="font-bold">{{estadoJuego().palabraSecreta}}</span>
+                                </div>
+                                }
+                            </div>
+
+                            <!-- Botones del abecedario -->
+                            <div class="mb-6">
+                                <h3 class="text-lg font-bold mb-4 text-center text-blue-300">Selecciona una letra:</h3>
+                                <div class="grid grid-cols-6 md:grid-cols-9 gap-2">
+                                    @for (letra of abecedario; track letra) {
+                                    <button class="min-h-12 min-w-12 p-3 rounded font-bold text-white transition-all duration-200 
+                                                    hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500
+                                                    {{letraSeleccionada(letra) ? 
+                                                        (letraCorrecta(letra) ? 'bg-green-600 border border-green-500 cursor-not-allowed opacity-70' : 'bg-red-600 border border-red-500 cursor-not-allowed opacity-70') : 
+                                                        'bg-gray-700 hover:bg-gray-600 border border-gray-500'}}"
+                                        (click)="seleccionarLetra(letra)"
+                                        [disabled]="letraSeleccionada(letra) || estadoJuego().juegoTerminado">
+                                        {{letra}}
+                                    </button>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Letras incorrectas -->
+                            @if (estadoJuego().letrasIncorrectas.length > 0) {
+                            <div class="text-center mb-6">
+                                <h4 class="text-sm font-bold mb-2 text-red-400">Letras incorrectas:</h4>
+                                <div class="text-red-300 font-mono text-lg">
+                                    {{estadoJuego().letrasIncorrectas.join(', ')}}
+                                </div>
+                            </div>
+                            }
+
+                            <!-- Botón para nuevo juego -->
+                            <div class="text-center">
+                                <button
+                                    class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg text-white font-bold 
+                                            transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    (click)="iniciarNuevoJuego()">
+                                    @if (estadoJuego().juegoTerminado) {
+                                    Jugar de Nuevo
+                                    } @else {
+                                    Reiniciar Juego
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna lateral derecha (1/3 del ancho) -->
+                    <div class="space-y-6 flex flex-col">
+
+                        <!-- Imagen del ahorcado -->
+                        <div class="bg-gray-900 bg-opacity-40 p-6 rounded-lg shadow-lg text-white">
+                            <h3 class="text-lg font-bold mb-4 text-center text-blue-300">Estado del Ahorcado</h3>
+                            <div class="text-center">
+                                <img [src]="imagenAhorcado"
+                                    [alt]="'Ahorcado con ' + estadoJuego().letrasIncorrectas.length + ' errores'"
+                                    class="w-full max-w-64 mx-auto h-64 object-contain rounded-lg p-2"
+                                    onerror="this.style.display='none'">
+                            </div>
+                            <!-- Contador de errores -->
+                            <div class="text-center mt-4">
+                                <div class="text-sm text-gray-400">
+                                    Errores: {{estadoJuego().letrasIncorrectas.length}} /
+                                    {{estadoJuego().intentosMaximos}}
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Letras incorrectas -->
-                        @if (estadoJuego().letrasIncorrectas.length > 0) {
-                        <div class="text-center mb-6">
-                            <h4 class="text-sm font-bold mb-2 text-red-400">Letras incorrectas:</h4>
-                            <div class="text-red-300 font-mono text-lg">
-                                {{estadoJuego().letrasIncorrectas.join(', ')}}
+                        <!-- Estadísticas -->
+                        @if (partidas().length > 0) {
+                        <div class="bg-gray-900 bg-opacity-40 p-6 rounded-lg shadow-lg text-white 
+                                            w-full max-w-sm overflow-y-auto max-h-[330px]">
+                            <h3 class="text-lg font-bold mb-4 text-blue-300">Últimas Partidas</h3>
+                            <div class="space-y-3">
+                                @for (partida of partidas().slice(0, 5); track partida.id) {
+                                <div class="bg-black bg-opacity-30 p-3 rounded border border-gray-600">
+                                    <div class="text-sm font-bold text-gray-300">{{partida.palabra}}</div>
+                                    <div
+                                        class="text-xs font-bold {{partida.ganada ? 'text-green-400' : 'text-red-400'}}">
+                                        {{partida.ganada ? 'Ganada' : 'Perdida'}}
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        {{partida.tiempo_finalizacion}}s - {{partida.letras_seleccionadas}} letras
+                                    </div>
+                                </div>
+                                }
                             </div>
                         </div>
                         }
 
-                        <!-- Botón para nuevo juego -->
-                        <div class="text-center">
-                            <button
-                                class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg text-white font-bold 
-                                        transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                (click)="iniciarNuevoJuego()">
-                                @if (estadoJuego().juegoTerminado) {
-                                Jugar de Nuevo
-                                } @else {
-                                Reiniciar Juego
-                                }
-                            </button>
+                        <!-- Info adicional cuando no hay partidas -->
+                        @if (partidas().length === 0 && usuarioLogueado()) {
+                        <div class="bg-gray-900 bg-opacity-40 p-6 rounded-lg shadow-lg text-white text-center">
+                            <h3 class="text-lg font-bold mb-2 text-blue-300">¡Empezar!</h3>
+                            <p class="text-gray-400 text-sm">
+                                Completa tu primera partida para ver tus estadísticas aquí
+                            </p>
                         </div>
+                        }
+
                     </div>
-                </div>
-
-                <!-- Columna lateral derecha (1/3 del ancho) -->
-                <div class="space-y-6 flex flex-col">
-
-                    <!-- Imagen del ahorcado -->
-                    <div class="bg-gray-900 bg-opacity-40 p-6 rounded-lg shadow-lg text-white">
-                        <h3 class="text-lg font-bold mb-4 text-center text-blue-300">Estado del Ahorcado</h3>
-                        <div class="text-center">
-                            <img [src]="imagenAhorcado"
-                                [alt]="'Ahorcado con ' + estadoJuego().letrasIncorrectas.length + ' errores'"
-                                class="w-full max-w-64 mx-auto h-64 object-contain rounded-lg p-2"
-                                onerror="this.style.display='none'">
-                        </div>
-                        <!-- Contador de errores -->
-                        <div class="text-center mt-4">
-                            <div class="text-sm text-gray-400">
-                                Errores: {{estadoJuego().letrasIncorrectas.length}} / {{estadoJuego().intentosMaximos}}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Estadísticas -->
-                    @if (partidas().length > 0) {
-                    <div class="bg-gray-900 bg-opacity-40 p-6 rounded-lg shadow-lg text-white 
-                                        w-full max-w-sm overflow-y-auto max-h-[330px]">
-                        <h3 class="text-lg font-bold mb-4 text-blue-300">Últimas Partidas</h3>
-                        <div class="space-y-3">
-                            @for (partida of partidas().slice(0, 5); track partida.id) {
-                            <div class="bg-black bg-opacity-30 p-3 rounded border border-gray-600">
-                                <div class="text-sm font-bold text-gray-300">{{partida.palabra}}</div>
-                                <div class="text-xs font-bold {{partida.ganada ? 'text-green-400' : 'text-red-400'}}">
-                                    {{partida.ganada ? 'Ganada' : 'Perdida'}}
-                                </div>
-                                <div class="text-xs text-gray-500">
-                                    {{partida.tiempo_finalizacion}}s - {{partida.letras_seleccionadas}} letras
-                                </div>
-                            </div>
-                            }
-                        </div>
-                    </div>
-                    }
-
-                    <!-- Info adicional cuando no hay partidas -->
-                    @if (partidas().length === 0 && usuarioLogueado()) {
-                    <div class="bg-gray-900 bg-opacity-40 p-6 rounded-lg shadow-lg text-white text-center">
-                        <h3 class="text-lg font-bold mb-2 text-blue-300">¡Empezar!</h3>
-                        <p class="text-gray-400 text-sm">
-                            Completa tu primera partida para ver tus estadísticas aquí
-                        </p>
-                    </div>
-                    }
-
-                </div>
-            </div>
-        </div>
+                </div> 
+            </div> 
+        </div> 
     </div>
 </app-background>
