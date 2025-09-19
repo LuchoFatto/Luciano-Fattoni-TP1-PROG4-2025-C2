@@ -25,5 +25,4 @@ export class MayorMenorService {
 
         return error ? [] : (data as PartidaMayorMenor[]);
     }
-
 }

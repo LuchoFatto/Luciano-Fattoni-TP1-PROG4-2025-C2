@@ -12,13 +12,19 @@ import { UserService } from '../../../services/supabase/user.service';
     styleUrl: './mayor-menor.css'
 })
 export class MayorMenor implements OnInit {
+    private readonly ERRORES_MAXIMOS = 3;
+    private readonly TOTAL_CARTAS = 13;
+    private readonly NOMBRES_CARTAS = ['', 'As', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    private readonly DECIMALES_PROMEDIO = 1;
+
+    private datosUsuarioCache: any = null;
+
     estado = signal<EstadoMayorMenor>({
-        cartaActual: 0,
+        cartaActual: this.generarCartaAleatoria(),
         errores: 0,
         puntaje: 0,
         terminado: false,
-        ganado: false,
-        erroresMaximos: 3
+        erroresMaximos: this.ERRORES_MAXIMOS
     });
 
     private supabase = inject(Supabase);
@@ -26,7 +32,35 @@ export class MayorMenor implements OnInit {
     private userService = inject(UserService);
 
     async ngOnInit() {
-        await this.cargarPartidasUsuario();
+        try {
+            await this.inicializarDatosUsuario();
+            await this.cargarPartidasUsuario();
+        } catch (error) {
+            console.error('Error al cargar partidas del usuario:', error);
+        }
+    }
+
+    private async obtenerDatosUsuario(): Promise<any> {
+        const usuarioActual = this.supabase.usuarioActual();
+        if (!usuarioActual) return null;
+
+        // Si ya tenemos datos cache y el usuario es el mismo, devolverlos
+        if (this.datosUsuarioCache?.auth_id === usuarioActual.id) {
+            return this.datosUsuarioCache;
+        }
+
+        // Si no, obtener de BD y cachear
+        try {
+            const datosUsuario = await this.userService.getUserByAuthId(usuarioActual.id);
+            if (datosUsuario?.id) {
+                this.datosUsuarioCache = datosUsuario;
+                return datosUsuario;
+            }
+        } catch (error) {
+            console.error('Error obteniendo datos del usuario:', error);
+        }
+
+        return null;
     }
 
     iniciarJuego(): void {
@@ -35,15 +69,14 @@ export class MayorMenor implements OnInit {
             errores: 0,
             puntaje: 0,
             terminado: false,
-            ganado: false,
-            erroresMaximos: 3
+            erroresMaximos: this.ERRORES_MAXIMOS
         });
     }
 
     partidas = signal<PartidaMayorMenor[]>([]);
 
     private generarCartaAleatoria(): number {
-        return Math.floor(Math.random() * 13) + 1;
+        return Math.floor(Math.random() * this.TOTAL_CARTAS) + 1;
     }
 
     // Apostar mayor
@@ -70,7 +103,6 @@ export class MayorMenor implements OnInit {
             puntaje: acierto ? estado.puntaje + 1 : estado.puntaje,
             errores: acierto ? estado.errores : estado.errores + 1,
             terminado: acierto ? false : estado.errores + 1 >= estado.erroresMaximos,
-            ganado: false
         }));
 
         // Si terminó el juego, guardar partida
@@ -80,6 +112,11 @@ export class MayorMenor implements OnInit {
     }
 
     private validarApuesta(cartaAnterior: number, cartaNueva: number, apuesta: 'mayor' | 'menor'): boolean {
+        // Si son iguales, siempre es acierto
+        if (cartaAnterior === cartaNueva) {
+            return true;
+        }
+
         if (apuesta === 'mayor') {
             return cartaNueva > cartaAnterior;
         } else {
@@ -89,34 +126,53 @@ export class MayorMenor implements OnInit {
 
     // Guardar partida
     private async guardarPartida(): Promise<void> {
-        const usuarioActual = this.supabase.usuarioActual();
-        if (!usuarioActual) return;
+        try {
+            const datosUsuario = await this.obtenerDatosUsuario();
+            if (!datosUsuario?.id) {
+                console.warn('No se pudieron obtener datos del usuario');
+                return;
+            }
 
-        const datosUsuario = await this.userService.getUserByAuthId(usuarioActual.id);
-        const estadoActual = this.estado();
+            const estadoActual = this.estado();
+            const partida: CrearPartidaMayorMenor = {
+                user_id: datosUsuario.id.toString(),
+                puntaje: estadoActual.puntaje,
+                intentos: estadoActual.puntaje + estadoActual.errores,
+            };
 
-        const partida: CrearPartidaMayorMenor = {
-            user_id: datosUsuario!.id!.toString(),
-            puntaje: estadoActual.puntaje,
-            intentos: estadoActual.puntaje + estadoActual.errores,
-            ganado: estadoActual.puntaje > 0
-        };
+            const guardado = await this.mayorMenorService.guardarPartida(partida);
 
-        const guardado = await this.mayorMenorService.guardarPartida(partida);
-        if (guardado) {
-            await this.cargarPartidasUsuario(); // Recargar partidas
+            if (guardado) {
+                await this.cargarPartidasUsuario();
+            } else {
+                console.error('Error al guardar partida en la base de datos');
+            }
+
+        } catch (error) {
+            console.error('Error guardando partida:', error);
         }
     }
 
     async cargarPartidasUsuario(): Promise<void> {
-        const usuarioActual = this.supabase.usuarioActual();
-        if (!usuarioActual) return;
+        try {
+            const datosUsuario = await this.obtenerDatosUsuario();
+            if (!datosUsuario?.id) {
+                console.warn('No hay usuario logueado');
+                this.partidas.set([]);
+                return;
+            }
 
-        const datosUsuario = await this.userService.getUserByAuthId(usuarioActual.id);
-        if (!datosUsuario) return;
+            const partidasUsuario = await this.mayorMenorService.obtenerPartidasPorUsuario(datosUsuario.id.toString());
+            this.partidas.set(partidasUsuario || []);
 
-        const partidasUsuario = await this.mayorMenorService.obtenerPartidasPorUsuario(datosUsuario.id!.toString());
-        this.partidas.set(partidasUsuario);
+        } catch (error) {
+            console.error('Error cargando partidas del usuario:', error);
+            this.partidas.set([]);
+        }
+    }
+
+    private async inicializarDatosUsuario(): Promise<void> {
+        await this.obtenerDatosUsuario();
     }
 
     // Métodos helper para estadísticas
@@ -129,11 +185,8 @@ export class MayorMenor implements OnInit {
         const partidas = this.partidas();
         if (partidas.length === 0) return 0;
         const suma = partidas.reduce((acc, p) => acc + p.puntaje, 0);
-        return Math.round((suma / partidas.length) * 10) / 10;
-    }
-
-    obtenerPartidasGanadas(): number {
-        return this.partidas().filter(p => p.ganado).length;
+        const factor = Math.pow(10, this.DECIMALES_PROMEDIO);
+        return Math.round((suma / partidas.length) * factor) / factor;
     }
 
     formatearFecha(fecha: string): string {
@@ -151,8 +204,7 @@ export class MayorMenor implements OnInit {
 
     // Métodos helper para el template
     obtenerNombreCarta(valor: number): string {
-        const nombres = ['', 'As', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-        return nombres[valor] || '';
+        return this.NOMBRES_CARTAS[valor] || '';
     }
 
     obtenerEstadoTexto(): string {
