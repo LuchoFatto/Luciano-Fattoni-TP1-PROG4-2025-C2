@@ -2,13 +2,15 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { Supabase } from '../services/supabase/supabase';
 
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = async () => {
     const supabase = inject(Supabase);
     const router = inject(Router);
 
-    // if (supabase.datosUsuario()) {
-    //     return true;
-    // }
+    const {data: {user}} = await supabase.client.auth.getUser();
+
+    if (user) {
+        return true;
+    }
 
     return router.parseUrl('/login');
 };

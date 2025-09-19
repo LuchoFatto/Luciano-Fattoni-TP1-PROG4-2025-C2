@@ -10,12 +10,12 @@ export const routes: Routes = [
     {
         path: "register",
         loadComponent: () => import('./views/register/register').then((archivo) => archivo.Register),
-        //canActivate: [guestGuard],
+        canActivate: [guestGuard],
     },
     {
         path: "login",
         loadComponent: () => import('./views/login/login').then((archivo) => archivo.Login),
-        //canActivate: [guestGuard],
+        canActivate: [guestGuard],
     },
     {
         path: "profile",
@@ -24,17 +24,17 @@ export const routes: Routes = [
     {
         path: "games",
         loadComponent: () => import('./views/games/games').then((archivo) => archivo.Games),
-        //canActivate: [authGuard],
+        canActivate: [authGuard],
     },
     {
         path: "games/ahorcado",
         loadComponent: () => import('./views/games/ahorcado/ahorcado').then((archivo) => archivo.Ahorcado),
-        //canActivate: [authGuard],
+        canActivate: [authGuard],
     },
     {
         path: "games/mayor-menor",
         loadComponent: () => import('./views/games/mayor-menor/mayor-menor').then((archivo) => archivo.MayorMenor),
-        //anActivate: [authGuard],
+        canActivate: [authGuard],
     },
     {
         path: "",
