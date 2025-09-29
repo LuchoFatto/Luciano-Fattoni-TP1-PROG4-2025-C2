@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { Background } from '../../../components/background/background';
 import { AhorcadoService } from '../../../services/ahorcado.service';
-import { Supabase } from '../../../services/supabase/supabase';
+import { Supabase } from '../../../services/supabase';
 
 @Component({
     selector: 'app-ahorcado',

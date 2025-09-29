@@ -2,9 +2,9 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Background } from '../../components/background/background';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Supabase } from '../../services/supabase/supabase';
+import { Supabase } from '../../services/supabase';
 import { Alerts } from '../../services/alerts';
-import { UserService } from '../../services/supabase/user.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
     selector: 'app-login',

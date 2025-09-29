@@ -1,77 +1,116 @@
 <app-background>
-    <div class="flex gap-8 w-full max-w-6xl">
-        <!-- Chat Global (izquierda) -->
-        <section class="w-1/3 bg-gray-900 bg-opacity-40 p-6 rounded-lg shadow-lg text-white">
-            <div class="chat-header mb-4">
-                <h2 class="text-xl font-bold text-blue-300">Chat Global</h2>
-            </div>
-            <div class="chat-messages bg-black bg-opacity-30 rounded p-4 h-64 overflow-y-auto mb-4">
-                @if (mensajes().length === 0) {
-                <div
-                    class="message mb-2 p-2 bg-blue-900 bg-opacity-30 rounded text-sm border border-blue-500 border-opacity-30">
-                    <span class="message-user text-blue-300 font-bold">Sistema:</span>
-                    <span class="message-text text-gray-200 mx-2">¡Bienvenido al chat global!</span>
-                    <span class="message-time text-gray-400 text-xs">{{formatearHora()}}</span>
+    <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="flex gap-8 w-full max-w-7xl justify-center">
+            <!-- Chat Global (izquierda) -->
+            <section
+                class="w-96 bg-gray-900/80 backdrop-blur-sm p-6 rounded-2xl shadow-2xl text-white border border-gray-700">
+                <div class="chat-header mb-4">
+                    <h2 class="text-xl font-bold text-blue-300 text-center">Chat Global</h2>
                 </div>
-                }
-
-                @for (mensaje of mensajes(); track $index) {
-                <div
-                    class="message mb-2 p-2 bg-gray-800 bg-opacity-50 rounded text-sm border border-gray-600 border-opacity-30 hover:bg-opacity-70 transition-all">
-                    <span class="message-user text-blue-300 font-bold">{{mensaje.usuario_nombre}}:</span>
-                    <span class="message-text text-gray-100 mx-2">{{mensaje.mensaje}}</span>
-                    <span class="message-time text-gray-400 text-xs">{{formatearHora(mensaje.created_at)}}</span>
-                </div>
-                }
-            </div>
-
-            <div class="chat-input-area flex gap-2">
-                <input type="text" placeholder="Escribe tu mensaje..."
-                    class="flex-1 p-2 rounded border border-gray-600 bg-gray-800 bg-opacity-50 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-                    [(ngModel)]="textoMensaje" (keyup.enter)="enviarMensaje()" maxlength="500">
-                <button
-                    class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    (click)="enviarMensaje()" [disabled]="!textoMensaje().trim()">
-                    Enviar
-                </button>
-            </div>
-        </section>
-
-        <!-- Rectángulo principal: Bienvenida + Cards de juegos (derecha) -->
-        <section class="w-2/3 bg-gray-900 bg-opacity-40 p-8 rounded-lg shadow-lg text-white">
-            <!-- Mensaje de bienvenida -->
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold mb-4 text-blue-300">Sala de Juegos</h1>
-                <p class="text-gray-300">¡Bienvenido a nuestra sala de juegos! Elige un juego para comenzar a
-                    divertirte.</p>
-            </div>
-
-            <!-- Cards de juegos -->
-            <div class="games-section">
-                <h2 class="text-xl font-bold mb-6 text-center text-blue-300">Juegos Disponibles</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Card Ahorcado -->
-                    <div class="game-card bg-black bg-opacity-40 p-6 rounded-lg text-center cursor-pointer 
-                                hover:bg-opacity-60 hover:scale-105 transition-all duration-300 border-2 border-transparent 
-                                hover:border-blue-500" routerLink="/games/ahorcado">
-                        <img src="images/games/ahorcado/ahorcado.png" alt="Ahorcado"
-                            class="w-16 h-16 mx-auto mb-4 object-cover rounded">
-                        <h3 class="game-name text-xl font-bold mb-2 text-white">Ahorcado</h3>
-                        <p class="game-description text-gray-400 text-sm">Adivina la palabra secreta letra por letra</p>
+                <div class="chat-messages bg-black/30 rounded-lg p-4 h-[520px] overflow-y-auto mb-4">
+                    @if (mensajes().length === 0) {
+                    <div
+                        class="message mb-2 p-3 bg-blue-900/30 rounded-lg text-sm border border-blue-500/30 break-words">
+                        <span class="message-user text-blue-300 font-bold">Sistema:</span>
+                        <span class="message-text text-gray-200 mx-2">¡Bienvenido al chat global!</span>
+                        <span class="message-time text-gray-400 text-xs">{{formatearHora()}}</span>
                     </div>
+                    }
 
-                    <!-- Card Mayor o Menor -->
-                    <div class="game-card bg-black bg-opacity-40 p-6 rounded-lg text-center cursor-pointer 
-                                hover:bg-opacity-60 hover:scale-105 transition-all duration-300 border-2 border-transparent 
-                                hover:border-blue-500" routerLink="/games/mayor-menor">
-                        <img src="images/games/mayor-menor.png" alt="mayor-menor"
-                            class="w-16 h-16 mx-auto mb-4 object-cover rounded">
-                        <h3 class="game-name text-xl font-bold mb-2 text-white">Mayor o Menor</h3>
-                        <p class="game-description text-gray-400 text-sm">Predice si la siguiente carta será mayor o
-                            menor</p>
+                    @for (mensaje of mensajes(); track $index) {
+                    <div
+                        class="message mb-2 p-3 bg-gray-800/50 rounded-lg text-sm border border-gray-600/30 hover:bg-gray-700/50 transition-all break-words">
+                        <span class="message-user text-blue-300 font-bold">{{mensaje.usuario_nombre}}:</span>
+                        <span class="message-text text-gray-100 mx-2">{{mensaje.mensaje}}</span>
+                        <span class="message-time text-gray-400 text-xs">{{formatearHora(mensaje.created_at)}}</span>
+                    </div>
+                    }
+                </div>
+
+                <div class="chat-input-area flex gap-2">
+                    <input type="text" placeholder="Escribe tu mensaje..."
+                        class="flex-1 p-3 rounded-lg border border-gray-600 bg-gray-800/50 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                        [(ngModel)]="textoMensaje" (keyup.enter)="enviarMensaje()" maxlength="500">
+                    <button
+                        class="bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
+                        (click)="enviarMensaje()" [disabled]="!textoMensaje().trim()">
+                        Enviar
+                    </button>
+                </div>
+            </section>
+
+            <!-- Panel principal: Bienvenida + Cards de juegos (centro) -->
+            <section
+                class="w-[600px] bg-gray-900/95 backdrop-blur-sm p-8 rounded-2xl shadow-2xl text-white border border-gray-700">
+                <!-- Mensaje de bienvenida -->
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold mb-4 text-blue-300">Sala de Juegos</h1>
+                    <p class="text-gray-400">¡Bienvenido a nuestra sala de juegos! Elige un juego para comenzar a
+                        divertirte.</p>
+                </div>
+
+                <!-- Cards de juegos -->
+                <div class="games-section">
+                    <h2 class="text-xl font-bold mb-6 text-center text-blue-300">Juegos Disponibles</h2>
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Card Ahorcado -->
+                        <div class="game-card bg-black/40 p-6 rounded-xl text-center cursor-pointer 
+                                    hover:bg-black/60 hover:scale-105 transition-all duration-300 border-2 border-transparent 
+                                    hover:border-red-500 shadow-lg backdrop-blur-sm" routerLink="/games/ahorcado">
+                            <div
+                                class="w-16 h-16 mx-auto mb-4 bg-red-600 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                                <img src="/images/games/ahorcado/ahorcado.png" alt="Ahorcado"
+                                    class="w-10 h-10 object-contain">
+                            </div>
+                            <h3 class="game-name text-xl font-bold mb-2 text-white">Ahorcado</h3>
+                            <p class="game-description text-gray-400 text-sm">Adivina la palabra secreta letra por letra
+                            </p>
+                        </div>
+
+                        <!-- Card Mayor o Menor -->
+                        <div class="game-card bg-black/40 p-6 rounded-xl text-center cursor-pointer 
+                                    hover:bg-black/60 hover:scale-105 transition-all duration-300 border-2 border-transparent 
+                                    hover:border-green-500 shadow-lg backdrop-blur-sm" routerLink="/games/mayor-menor">
+                            <div
+                                class="w-16 h-16 mx-auto mb-4 bg-green-600 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                                <img src="/images/games/mayor-menor.png" alt="Mayor o Menor"
+                                    class="w-10 h-10 object-contain">
+                            </div>
+                            <h3 class="game-name text-xl font-bold mb-2 text-white">Mayor o Menor</h3>
+                            <p class="game-description text-gray-400 text-sm">Predice si la siguiente carta será mayor o
+                                menor</p>
+                        </div>
+
+                        <!-- Card Preguntados -->
+                        <div class="game-card bg-black/40 p-6 rounded-xl text-center cursor-pointer 
+                                    hover:bg-black/60 hover:scale-105 transition-all duration-300 border-2 border-transparent 
+                                    hover:border-yellow-500 shadow-lg backdrop-blur-sm"
+                            routerLink="/games/preguntados">
+                            <div
+                                class="w-16 h-16 mx-auto mb-4 bg-yellow-600 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                                <img src="/images/games/preguntados.png" alt="Preguntados"
+                                    class="w-10 h-10 object-contain">
+                            </div>
+                            <h3 class="game-name text-xl font-bold mb-2 text-white">Preguntados</h3>
+                            <p class="game-description text-gray-400 text-sm">Responde preguntas de cultura general</p>
+                        </div>
+
+                        <!-- Card Simon Dice -->
+                        <div class="game-card bg-black/40 p-6 rounded-xl text-center cursor-pointer 
+                                    hover:bg-black/60 hover:scale-105 transition-all duration-300 border-2 border-transparent 
+                                    hover:border-purple-500 shadow-lg backdrop-blur-sm" routerLink="/games/simon-dice">
+                            <div
+                                class="w-16 h-16 mx-auto mb-4 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                                <img src="/images/games/simon-dice.png" alt="Simon Dice"
+                                    class="w-10 h-10 object-contain">
+                            </div>
+                            <h3 class="game-name text-xl font-bold mb-2 text-white">Simon Dice</h3>
+                            <p class="game-description text-gray-400 text-sm">Memoriza y repite la secuencia de colores
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        </div>
     </div>
 </app-background>

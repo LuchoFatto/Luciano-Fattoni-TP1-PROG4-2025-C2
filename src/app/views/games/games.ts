@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Background } from '../../components/background/background';
 import { RouterLink } from '@angular/router';
 import { ChatService } from '../../services/chat.service';
-import { Supabase } from '../../services/supabase/supabase';
+import { Supabase } from '../../services/supabase';
 import { FormsModule } from '@angular/forms';
 
 @Component({

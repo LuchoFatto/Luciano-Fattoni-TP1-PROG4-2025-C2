@@ -1,7 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { Supabase } from './supabase/supabase';
+import { Supabase } from './supabase';
 import { CrearPartidaAhorcado, EstadoJuegoAhorcado, PartidaAhorcado } from '../interfaces/partida.ahorcado';
-import { UserService } from './supabase/user.service';
+import { UserService } from './user.service';
 
 @Injectable({
     providedIn: 'root'

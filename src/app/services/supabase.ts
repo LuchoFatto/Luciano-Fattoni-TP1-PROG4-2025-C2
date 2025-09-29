@@ -1,6 +1,6 @@
 import { Injectable, WritableSignal, signal } from '@angular/core';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
-import { CreateUserData } from '../../interfaces/user';
+import { CreateUserData } from '../interfaces/user';
 
 export interface AuthResult {
     success: boolean;

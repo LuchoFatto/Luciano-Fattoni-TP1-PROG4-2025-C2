@@ -1,0 +1,108 @@
+<app-background>
+    <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-[450px_280px] gap-6">
+
+            <!-- Bloque principal del juego -->
+            <div
+                class="w-[450px] h-[600px] bg-gray-900/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-gray-700 flex flex-col">
+
+                <!-- Título y estado -->
+                <header class="text-center mb-6">
+                    <h1 class="text-3xl font-bold text-blue-300 mb-2">Preguntados</h1>
+                    <p class="text-base text-gray-400">¿Cuántas preguntas podés acertar?</p>
+                </header>
+
+                <div class="text-center mb-6">
+                    <p class="text-xl font-medium text-blue-300">
+                        {{ obtenerEstadoTexto() }}
+                    </p>
+                    <p class="text-base font-bold transition" [class.text-yellow-400]="tiempoRestante() > 5"
+                        [class.text-red-500]="tiempoRestante() <= 5" [class.animate-pulse]="tiempoRestante() <= 5">
+                        Tiempo restante: {{ tiempoRestante() }}s
+                    </p>
+                </div>
+
+                <!-- Pregunta actual y opciones -->
+                @if (preguntaActual && !estadoDelJuego().juegoTerminado) {
+                <div class="mb-6">
+                    <div class="bg-white rounded-lg p-6 shadow-lg text-center">
+                        <div class="text-lg font-bold text-gray-800 mb-2">
+                            {{ preguntaActual.question }}
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            @for (opcion of preguntaActual.allAnswers; track opcion) {
+                            <button (click)="seleccionarRespuesta(opcion)"
+                                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                {{ opcion }}
+                            </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+                }
+
+                <!-- Mensaje de fin de partida -->
+                <div class="h-20 mb-4">
+                    @if (estadoDelJuego().juegoTerminado) {
+                    <div class="bg-purple-900/50 rounded-lg p-4 text-center h-full flex flex-col justify-center">
+                        <p class="text-white font-semibold mb-1">¡Partida Terminada!</p>
+                        <p class="text-gray-300 text-sm">
+                            Aciertos: <span class="text-yellow-400 font-bold">{{ aciertosJuego() }}</span>
+                        </p>
+                    </div>
+                    }
+                </div>
+
+                <!-- Botón de nuevo juego -->
+                <div class="text-center">
+                    <button (click)="iniciarJuego()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-8 rounded-lg transition">
+                        Nuevo Juego
+                    </button>
+                </div>
+            </div>
+
+            <!-- Columna lateral para estadísticas -->
+            <div class="flex flex-col gap-6">
+                @if (usuarioLogueado() && partidas().length > 0) {
+                <div class="bg-gray-900/80 rounded-2xl p-5 shadow text-white">
+                    <h3 class="text-xl font-bold text-blue-300 mb-4 text-center">Estadísticas</h3>
+                    <div class="space-y-3 text-base">
+                        <div class="flex justify-between">
+                            <span>Mejor puntaje</span>
+                            <span class="text-yellow-400 font-bold">{{ obtenerMejorPuntaje() }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Promedio</span>
+                            <span class="text-green-400 font-bold">{{ obtenerPromedioPuntaje() }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Partidas</span>
+                            <span class="text-blue-400 font-bold">{{ partidas().length }}</span>
+                        </div>
+                    </div>
+                </div>
+                }
+                @if (partidas().length > 0) {
+                <div class="bg-gray-900/80 rounded-2xl p-5 shadow flex-1 text-white overflow-hidden flex flex-col">
+                    <h3 class="text-xl font-bold text-blue-300 mb-4 text-center">Últimas Partidas</h3>
+                    <div class="overflow-y-auto space-y-3 text-sm max-h-78">
+                        @for (partida of partidas().slice(0,6); track partida.id) {
+                        <div class="bg-black/30 p-3 rounded border-l-4 border-blue-500 flex justify-between">
+                            <div>
+                                <div class="text-blue-400 font-semibold">
+                                    Aciertos: {{ partida.preguntas_acertadas }} / {{ partida.preguntas_totales }}
+                                </div>
+                            </div>
+                            <div class="text-gray-500 text-xs">
+                                {{ formatearFecha(partida.created_at) }}
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</app-background>

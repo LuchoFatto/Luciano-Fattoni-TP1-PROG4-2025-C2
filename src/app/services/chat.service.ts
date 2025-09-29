@@ -1,7 +1,7 @@
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
-import { Supabase } from './supabase/supabase';
+import { Supabase } from './supabase';
 import { CrearMensaje, Mensaje } from '../interfaces/mensaje';
-import { UserService } from './supabase/user.service';
+import { UserService } from './user.service';
 
 @Injectable({
     providedIn: 'root'

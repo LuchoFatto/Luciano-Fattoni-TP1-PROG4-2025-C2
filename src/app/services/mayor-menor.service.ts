@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Supabase } from './supabase/supabase';
+import { Supabase } from './supabase';
 import { CrearPartidaMayorMenor, PartidaMayorMenor } from '../interfaces/partida-mayor-menor';
 
 @Injectable({

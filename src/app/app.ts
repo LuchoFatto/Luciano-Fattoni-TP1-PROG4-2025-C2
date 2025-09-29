@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
-import { Supabase } from './services/supabase/supabase';
+import { Supabase } from './services/supabase';
 import { Alerts } from './services/alerts';
 
 @Component({

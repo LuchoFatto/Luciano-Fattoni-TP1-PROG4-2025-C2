@@ -37,6 +37,11 @@ export const routes: Routes = [
         canActivate: [authGuard],
     },
     {
+        path: "games/preguntados",
+        loadComponent: () => import('./views/games/preguntados/preguntados').then((archivo) => archivo.Preguntados),
+        canActivate: [authGuard],
+    },
+    {
         path: "",
         redirectTo: 'home',
         pathMatch: 'full',

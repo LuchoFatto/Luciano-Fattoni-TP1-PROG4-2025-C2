@@ -1,9 +1,9 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Background } from '../../../components/background/background';
-import { Supabase } from '../../../services/supabase/supabase';
+import { Supabase } from '../../../services/supabase';
 import { MayorMenorService } from '../../../services/mayor-menor.service';
 import { CrearPartidaMayorMenor, EstadoMayorMenor, PartidaMayorMenor } from '../../../interfaces/partida-mayor-menor';
-import { UserService } from '../../../services/supabase/user.service';
+import { UserService } from '../../../services/user.service';
 
 @Component({
     selector: 'app-mayor-menor',
