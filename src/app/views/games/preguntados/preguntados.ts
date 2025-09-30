@@ -2,19 +2,16 @@ import {
     Component,
     inject,
     signal,
-    OnInit,
-    OnDestroy,
     DestroyRef,
     computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PreguntadosService } from '../../../services/preguntados.service';
-import { Supabase } from '../../../services/supabase';
-import { UserService } from '../../../services/user.service';
 import { EstadoJuego, PartidaPreguntados } from '../../../interfaces/partida-preguntados';
 import { Background } from '../../../components/background/background';
-import { User } from '../../../interfaces/user';
+import { GameUserService } from '../../../services/game-user.service';
+import { TimerService } from '../../../services/timer.service';
 
 @Component({
     selector: 'app-preguntados',
@@ -23,36 +20,35 @@ import { User } from '../../../interfaces/user';
     templateUrl: './preguntados.html',
     styleUrl: './preguntados.css',
 })
-export class Preguntados implements OnInit, OnDestroy {
-    private readonly ERRORES_MAXIMOS = 3;
-    private readonly PREGUNTAS_POR_LOTE = 5;
-    private readonly TIEMPO_POR_PREGUNTA = 15;
-    private readonly ACIERTOS_MINIMOS_PARA_GANAR = 1;
-
+export class Preguntados {
     private preguntadosService = inject(PreguntadosService);
-    private supabase = inject(Supabase);
-    private userService = inject(UserService);
     private destroyRef = inject(DestroyRef);
+    private gameUserService = inject(GameUserService);
+    private timerService = inject(TimerService)
 
-    private datosUsuarioCache: User | null = null;
+    mostrandoResultado = signal(false);
+    respuestaSeleccionada = signal<string | null>(null);
+    esRespuestaCorrecta = signal<boolean | null>(null);
 
     // Señales para el estado del juego
     cargandoPreguntas = signal(false);
     aciertosJuego = signal(0);
-    tiempoRestante = signal(this.TIEMPO_POR_PREGUNTA);
+    tiempoRestante = signal(this.preguntadosService.TIEMPO_POR_PREGUNTA);
+    juegoIniciado = signal(false);
 
     estadoDelJuego = signal<EstadoJuego>({
         preguntas: [],
         preguntaActual: 0,
-        intentosRestantes: this.ERRORES_MAXIMOS,
+        intentosRestantes: this.preguntadosService.ERRORES_MAXIMOS,
         juegoTerminado: false,
         tiempoInicio: null,
         juegoGanado: false,
     })
-    // === TEMPORIZADOR ===);
 
     // Historial de partidas
     partidas = signal<PartidaPreguntados[]>([]);
+
+    private intervaloTiempo?: number;
 
     estadisticas = computed(() => {
         const partidasData = this.partidas();
@@ -74,177 +70,116 @@ export class Preguntados implements OnInit, OnDestroy {
         };
     });
 
-    private intervaloTemporizador?: number;
-
     async ngOnInit() {
         try {
-            await this.inicializarDatosUsuario();
+            const user = await this.gameUserService.getCurrentUser();
+            if (user) {
+                console.log('Usuario cargado:', user);
+            } else {
+                console.warn('No se pudo cargar el usuario.');
+            }
             await this.cargarPartidasUsuario();
-            this.cargarPreguntasIniciales();
         } catch (error) {
             console.error('Error en inicialización:', error);
         }
     }
 
     ngOnDestroy() {
-        this.detenerTemporizador();
-    }
-
-    // === GESTIÓN DE USUARIO CORREGIDA ===
-    private async obtenerDatosUsuario(): Promise<User | null> {
-        const usuarioAuth = this.supabase.usuarioActual();
-        if (!usuarioAuth) return null;
-
-        if (this.datosUsuarioCache?.auth_id === usuarioAuth.id) {
-            return this.datosUsuarioCache;
-        }
-
-        try {
-            const datosUsuario = await this.userService.getUserByAuthId(usuarioAuth.id);
-            if (datosUsuario?.id) {
-                this.datosUsuarioCache = {
-                    id: datosUsuario.id,
-                    auth_id: usuarioAuth.id,
-                    nombre: datosUsuario.nombre,
-                    apellido: datosUsuario.apellido,
-                    edad: datosUsuario.edad,
-                    email: datosUsuario.email,
-                    created_at: datosUsuario.created_at,
-                    updated_at: datosUsuario.updated_at
-                };
-                return this.datosUsuarioCache;
-            }
-        } catch (error) {
-            console.error('Error obteniendo datos del usuario:', error);
-        }
-
-        return null;
-    }
-
-    private async inicializarDatosUsuario(): Promise<void> {
-        await this.obtenerDatosUsuario();
+        this.detenerIntervaloTiempo();
+        this.timerService.detener();
     }
 
     usuarioLogueado(): boolean {
-        return this.supabase.usuarioActual() !== null;
+        return this.gameUserService.isUserLoggedIn();
     }
 
-    // === LÓGICA DEL JUEGO ===
-    cargarPreguntasIniciales() {
-        this.cargandoPreguntas.set(true);
-        const categoriaAleatoria = this.preguntadosService.obtenerCategoriaAleatoria();
+    iniciarJuego(): void {
+        this.timerService.reiniciar();
+        this.aciertosJuego.set(0);
+        this.juegoIniciado.set(true);
 
+        this.mostrandoResultado.set(false);
+        this.respuestaSeleccionada.set(null);
+        this.esRespuestaCorrecta.set(null);
+
+        this.cargandoPreguntas.set(true);
         this.preguntadosService
-            .obtenerPreguntasTrivia(this.PREGUNTAS_POR_LOTE, categoriaAleatoria)
+            .inicializarJuego(
+                this.preguntadosService.PREGUNTAS_POR_LOTE,
+                this.preguntadosService.ERRORES_MAXIMOS
+            )
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (preguntas) => {
-                    this.estadoDelJuego.set({
-                        preguntas,
-                        preguntaActual: 0,
-                        intentosRestantes: this.ERRORES_MAXIMOS,
-                        juegoTerminado: false,
-                        tiempoInicio: Date.now(),
-                        juegoGanado: false,
-                    });
+                next: (estadoInicial) => {
+                    this.estadoDelJuego.set(estadoInicial);
                     this.cargandoPreguntas.set(false);
                     this.iniciarTemporizadorPregunta();
                 },
                 error: (error) => {
-                    console.error('Error al cargar preguntas:', error);
+                    console.error('Error al inicializar el juego:', error);
                     this.cargandoPreguntas.set(false);
                 },
             });
     }
 
-    iniciarJuego(): void {
-        this.detenerTemporizador();
-        this.aciertosJuego.set(0);
-
-        this.estadoDelJuego.set({
-            preguntas: [],
-            preguntaActual: 0,
-            intentosRestantes: this.ERRORES_MAXIMOS,
-            juegoTerminado: false,
-            tiempoInicio: null,
-            juegoGanado: false,
-        });
-
-        this.cargarPreguntasIniciales();
-    }
-
-    private avanzarJuego(esRespuestaCorrecta: boolean = false): void {
-        const estado = this.estadoDelJuego();
-        let nuevosAciertos = this.aciertosJuego();
-        let nuevosIntentos = estado.intentosRestantes;
-
-        if (esRespuestaCorrecta) {
-            nuevosAciertos++;
-            this.aciertosJuego.set(nuevosAciertos);
-        } else {
-            nuevosIntentos--;
-        }
-
-        const siguientePregunta = estado.preguntaActual + 1;
-        const juegoTerminado = nuevosIntentos <= 0 || siguientePregunta >= estado.preguntas.length;
-
-        if (juegoTerminado) {
-            const perdioTodosLosIntentos = nuevosIntentos <= 0;
-            const completoTodasLasPreguntas = siguientePregunta >= estado.preguntas.length;
-
-            this.estadoDelJuego.update((e) => ({
-                ...e,
-                intentosRestantes: nuevosIntentos,
-                preguntaActual: estado.preguntaActual,
-                juegoTerminado: perdioTodosLosIntentos,
-                juegoGanado: false, 
-            }));
-
-            if (perdioTodosLosIntentos) {
-                this.terminarJuego();
-            } else if (completoTodasLasPreguntas) {
-                this.cargarMasPreguntasParaContinuar();
-            }
-        } else {
-            this.estadoDelJuego.update((e) => ({
-                ...e,
-                intentosRestantes: nuevosIntentos,
-                preguntaActual: siguientePregunta,
-            }));
-            this.iniciarTemporizadorPregunta();
-        }
-    }
-
     seleccionarRespuesta(respuestaSeleccionada: string) {
         const estado = this.estadoDelJuego();
-        if (estado.juegoTerminado) return;
+        if (estado.juegoTerminado || this.mostrandoResultado()) return;
 
-        this.detenerTemporizador();
+        this.detenerIntervaloTiempo();
+
         const preguntaActual = estado.preguntas[estado.preguntaActual];
-        const esCorrecta = respuestaSeleccionada === preguntaActual.correctAnswer;
+        const esCorrecta = preguntaActual.correctAnswer === respuestaSeleccionada;
 
-        this.avanzarJuego(esCorrecta);
+        // Actualizar aciertos si es correcta
+        if (esCorrecta) {
+            this.aciertosJuego.update(a => a + 1);
+        }
+
+        // Mostrar feedback visual
+        this.respuestaSeleccionada.set(respuestaSeleccionada);
+        this.esRespuestaCorrecta.set(esCorrecta);
+        this.mostrandoResultado.set(true);
+
+        setTimeout(() => {
+            // Resetear feedback visual ANTES de continuar
+            this.mostrandoResultado.set(false);
+            this.respuestaSeleccionada.set(null);
+            this.esRespuestaCorrecta.set(null);
+
+            // Usar el método refactorizado del service
+            const nuevoEstado = this.preguntadosService.actualizarEstadoJuego(
+                estado,
+                respuestaSeleccionada
+            );
+
+            this.estadoDelJuego.set(nuevoEstado);
+
+            if (nuevoEstado.juegoTerminado) {
+                this.terminarJuego();
+            } else if (nuevoEstado.juegoGanado) {
+                // Si completó todas las preguntas del lote, cargar más
+                this.cargarMasPreguntasParaContinuar();
+            } else {
+                // Continuar con la siguiente pregunta
+                this.iniciarTemporizadorPregunta();
+            }
+        }, 2000);
     }
 
     private cargarMasPreguntasParaContinuar() {
         this.cargandoPreguntas.set(true);
-        const categoriaAleatoria = this.preguntadosService.obtenerCategoriaAleatoria();
 
+        // Usar el método refactorizado del service
         this.preguntadosService
-            .obtenerPreguntasTrivia(this.PREGUNTAS_POR_LOTE, categoriaAleatoria)
+            .cargarMasPreguntas(
+                this.estadoDelJuego(),
+                this.preguntadosService.PREGUNTAS_POR_LOTE
+            )
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (nuevasPreguntas) => {
-                    const estadoActual = this.estadoDelJuego();
-                    const preguntasCombinadas = [...estadoActual.preguntas, ...nuevasPreguntas];
-
-                    this.estadoDelJuego.update(estado => ({
-                        ...estado,
-                        preguntas: preguntasCombinadas,
-                        preguntaActual: estadoActual.preguntaActual + 1,
-                        juegoTerminado: false
-                    }));
-
+                next: (nuevoEstado) => {
+                    this.estadoDelJuego.set(nuevoEstado);
                     this.cargandoPreguntas.set(false);
                     this.iniciarTemporizadorPregunta();
                 },
@@ -255,92 +190,67 @@ export class Preguntados implements OnInit, OnDestroy {
                 },
             });
     }
+
     private iniciarTemporizadorPregunta() {
-        this.detenerTemporizador();
-        this.tiempoRestante.set(this.TIEMPO_POR_PREGUNTA);
+        this.detenerIntervaloTiempo();
+        let tiempoActual = this.preguntadosService.TIEMPO_POR_PREGUNTA;
+        this.tiempoRestante.set(tiempoActual);
 
-        this.intervaloTemporizador = window.setInterval(() => {
-            const tiempo = this.tiempoRestante() - 1;
-            this.tiempoRestante.set(tiempo);
+        // Actualizar el contador visual cada segundo
+        this.intervaloTiempo = window.setInterval(() => {
+            tiempoActual--;
+            this.tiempoRestante.set(tiempoActual);
 
-            if (tiempo <= 0) {
-                this.procesarRespuestaTimeout();
+            if (tiempoActual <= 0) {
+                this.detenerIntervaloTiempo();
+                // Timeout: contar como respuesta incorrecta
+                this.seleccionarRespuesta('');
             }
         }, 1000);
     }
 
-    private procesarRespuestaTimeout() {
-        this.avanzarJuego(false);
-    }
-
-    private detenerTemporizador() {
-        if (this.intervaloTemporizador) {
-            clearInterval(this.intervaloTemporizador);
-            this.intervaloTemporizador = undefined;
+    private detenerIntervaloTiempo() {
+        if (this.intervaloTiempo) {
+            clearInterval(this.intervaloTiempo);
+            this.intervaloTiempo = undefined;
         }
     }
 
     // === FIN DEL JUEGO ===
-    private terminarJuego() {
-        this.detenerTemporizador();
+    private async terminarJuego() {
+        this.detenerIntervaloTiempo();
+        this.juegoIniciado.set(false);
 
-        this.estadoDelJuego.update((estado) => ({
-            ...estado,
-            juegoTerminado: true,
-            juegoGanado: false,
-        }));
+        const estado = this.estadoDelJuego();
+        const user = await this.gameUserService.getCurrentUser();
 
-        if (this.aciertosJuego() >= this.ACIERTOS_MINIMOS_PARA_GANAR && this.usuarioLogueado()) {
-            this.guardarResultado();
-        }
-    }
-
-    private async guardarResultado() {
-        try {
-            const datosUsuario = await this.obtenerDatosUsuario();
-            if (!datosUsuario) {
-                console.error('No se pudieron obtener datos del usuario');
-                return;
+        if (user && user.id) {
+            try {
+                // Pasar los aciertos al service
+                await this.preguntadosService.finalizarJuego(
+                    estado,
+                    user.id,
+                    this.aciertosJuego()
+                );
+                await this.cargarPartidasUsuario();
+                console.log('Resultado guardado correctamente');
+            } catch (error) {
+                console.error('Error al guardar resultado:', error);
             }
-
-            const resultado = {
-                user_id: datosUsuario.id?.toString()!,
-                preguntas_acertadas: this.aciertosJuego(),
-                preguntas_totales: this.estadoDelJuego().preguntas.length,
-            };
-
-            await this.preguntadosService.guardarResultadoPartida(resultado);
-            await this.cargarPartidasUsuario();
-
-            console.log('Resultado guardado correctamente');
-        } catch (error) {
-            console.error('Error al guardar resultado:', error);
         }
     }
 
     // === HISTORIAL DE PARTIDAS ===
     async cargarPartidasUsuario(): Promise<void> {
-        try { 
-            const datosUsuario = await this.obtenerDatosUsuario();
-            if (!datosUsuario) return;
-
-            const { data, error } = await this.supabase.client
-                .from('partidas_preguntados')
-                .select('*')
-                .eq('user_id', datosUsuario.id)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-            this.partidas.set(data || []);
-            console.log(`Cargadas ${data?.length || 0} partidas del usuario`);
+        try {
+            const partidas = await this.gameUserService.loadUserGames('partidas_preguntados');
+            this.partidas.set(partidas);
         } catch (error) {
             console.error('Error al cargar partidas:', error);
-            this.partidas.set([]);
         }
     }
 
-    // === MÉTODOS HELPER MEJORADOS ===
+    // === MÉTODOS HELPER ===
 
     obtenerMejorPuntaje(): number {
         return this.estadisticas().mejorPuntaje;
@@ -382,5 +292,32 @@ export class Preguntados implements OnInit, OnDestroy {
     get preguntaActual() {
         const estado = this.estadoDelJuego();
         return estado.preguntas[estado.preguntaActual];
+    }
+
+    obtenerClaseBoton(opcion: string): string {
+        if (!this.mostrandoResultado()) {
+            return 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-400 cursor-pointer';
+        }
+
+        const esLaSeleccionada = this.respuestaSeleccionada() === opcion;
+        const esLaCorrecta = opcion === this.preguntaActual.correctAnswer;
+        const respondiCorrectamente = this.esRespuestaCorrecta();
+
+        // Si es la que seleccionó
+        if (esLaSeleccionada) {
+            if (respondiCorrectamente) {
+                return 'bg-green-600 text-white border-2 border-green-400';
+            } else {
+                return 'bg-red-600 text-white border-2 border-red-400';
+            }
+        }
+
+        // Si no es la seleccionada pero es la correcta (y respondió mal)
+        if (esLaCorrecta && !respondiCorrectamente) {
+            return 'bg-green-600 text-white border-2 border-green-400 animate-pulse';
+        }
+
+        // Las demás opciones
+        return 'bg-gray-500 text-gray-300 cursor-not-allowed';
     }
 }

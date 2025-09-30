@@ -1,8 +1,8 @@
 import { Preguntas } from "./preguntas";
 
 export interface PartidaPreguntados {
-    id: string;
-    user_id: string;
+    id: number;
+    user_id: number;
     preguntas_acertadas: number;
     preguntas_totales: number;
     created_at: string;

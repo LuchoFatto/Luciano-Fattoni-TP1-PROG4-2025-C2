@@ -2,6 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Supabase } from './supabase';
 import { CrearPartidaAhorcado, EstadoJuegoAhorcado, PartidaAhorcado } from '../interfaces/partida.ahorcado';
 import { UserService } from './user.service';
+import { TimerService } from './timer.service';
 
 @Injectable({
     providedIn: 'root'
@@ -9,9 +10,9 @@ import { UserService } from './user.service';
 export class AhorcadoService {
     private readonly supabase = inject(Supabase);
     private userService = inject(UserService);
+    private timerService = inject(TimerService)
 
     private readonly palabras = [
-        // Tecnología Web
         'ANGULAR', 'TYPESCRIPT', 'JAVASCRIPT', 'COMPONENT', 'SERVICE',
         'ROUTING', 'SIGNAL', 'TEMPLATE', 'BINDING', 'DIRECTIVE',
         'OBSERVABLE', 'REACTIVE', 'STANDALONE', 'INJECTION', 'GUARD',
@@ -49,6 +50,8 @@ export class AhorcadoService {
             tiempoInicio: Date.now(),
             intentosMaximos: 7
         });
+
+        this.timerService.iniciarSinDuracion();
     }
 
     adivinarLetra(letra: string): void {
@@ -93,13 +96,15 @@ export class AhorcadoService {
                 juegoGanado: todasLasLetras
             }));
 
+            const tiempoFinalizacion = this.timerService.detenerYObtenerTiempo(); // Detiene y obtiene el tiempo
+
             // Guardar partida automáticamente
-            this.guardarPartida();
+            this.guardarPartida(tiempoFinalizacion);
         }
     }
 
     // Guardar partida en base de datos
-    async guardarPartida(): Promise<void> {
+    async guardarPartida(tiempoFinalizacion: number): Promise<void> {
         const estado = this.estadoJuego();
         const usuarioActual = this.supabase.usuarioActual();
 
@@ -107,7 +112,6 @@ export class AhorcadoService {
 
         const datosUsuario = await this.userService.getUserByAuthId(usuarioActual.id);
 
-        const tiempoFinalizacion = Math.floor((Date.now() - estado.tiempoInicio) / 1000); // en segundos
         const totalLetrasSeleccionadas = estado.letrasAdivinadas.length + estado.letrasIncorrectas.length;
 
         const nuevaPartida: CrearPartidaAhorcado = {
@@ -126,7 +130,6 @@ export class AhorcadoService {
             if (error) {
                 console.error('Error al guardar partida:', error);
             } else {
-                // Recargar partidas del usuario
                 await this.cargarPartidasUsuario();
             }
         } catch (error) {
