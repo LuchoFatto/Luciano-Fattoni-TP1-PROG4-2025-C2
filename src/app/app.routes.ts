@@ -22,6 +22,10 @@ export const routes: Routes = [
         loadComponent: () => import('./views/profile/profile').then((archivo) => archivo.Profile),
     },
     {
+        path: "results",
+        loadComponent: () => import('./views/results/results').then((archivo) => archivo.Results),
+    },
+    {
         path: "games",
         loadComponent: () => import('./views/games/games').then((archivo) => archivo.Games),
         canActivate: [authGuard],
@@ -39,6 +43,11 @@ export const routes: Routes = [
     {
         path: "games/preguntados",
         loadComponent: () => import('./views/games/preguntados/preguntados').then((archivo) => archivo.Preguntados),
+        canActivate: [authGuard],
+    },
+    {
+        path: "games/simon-dice",
+        loadComponent: () => import('./views/games/simon-dice/simon-dice').then((archivo) => archivo.SimonDice),
         canActivate: [authGuard],
     },
     {

@@ -1,0 +1,177 @@
+<app-background>
+    <div class="h-screen flex items-center justify-center p-6 overflow-hidden">
+        <div class="w-full max-w-7xl h-full flex flex-col">
+
+            <!-- Header fijo -->
+            <header class="text-center mb-6 flex-shrink-0">
+                <h1 class="text-4xl font-bold text-blue-300 mb-2">Resultados Globales</h1>
+                <p class="text-gray-400">Rankings de todos los jugadores</p>
+            </header>
+
+            <!-- Error -->
+            @if (error()) {
+            <div class="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-lg mb-4 text-center flex-shrink-0">
+                {{ error() }}
+            </div>
+            }
+
+            <!-- Contenedor principal de rankings -->
+            @if (!cargando()) {
+            <div
+                class="flex-1 bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700 p-6 overflow-hidden">
+                
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 h-full">
+
+                    <!-- Mayor o Menor -->
+                    <div class="bg-black/30 rounded-xl border border-gray-600 flex flex-col h-[340px]">
+                        <h2 class="text-xl font-bold text-green-300 p-3 text-center border-b border-gray-600">Mayor o
+                            Menor</h2>
+                        @if (rankingMayorMenor().length > 0) {
+                        <div class="flex-1 overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-green-900/50 sticky top-0">
+                                    <tr class="text-green-200">
+                                        <th class="px-3 py-3 text-center">#</th>
+                                        <th class="px-3 py-3 text-left">Jugador</th>
+                                        <th class="px-3 py-3 text-center">Puntaje</th>
+                                        <th class="px-3 py-3 text-center">Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (item of rankingMayorMenor(); track $index) {
+                                    <tr class="border-b border-gray-700/50 hover:bg-green-900/20 transition">
+                                        <td class="px-3 py-3 text-center text-yellow-400 font-bold">{{ $index + 1 }}
+                                        </td>
+                                        <td class="px-3 py-3 text-white">{{ item.usuario_nombre }}</td>
+                                        <td class="px-3 py-3 text-center text-green-400 font-bold">{{ item.puntaje }}
+                                        </td>
+                                        <td class="px-3 py-3 text-center text-gray-400 text-xs">{{
+                                            formatearFecha(item.created_at) }}</td>
+                                    </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        } @else {
+                        <div class="flex-1 flex items-center justify-center text-gray-400">No hay partidas registradas
+                        </div>
+                        }
+                    </div>
+
+                    <!-- Preguntados -->
+                    <div class="bg-black/30 rounded-xl border border-gray-600 flex flex-col h-[340px]">
+                        <h2 class="text-xl font-bold text-yellow-300 p-3 text-center border-b border-gray-600">
+                            Preguntados</h2>
+                        @if (rankingPreguntados().length > 0) {
+                        <div class="flex-1 overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-yellow-900/50 sticky top-0">
+                                    <tr class="text-yellow-200">
+                                        <th class="px-3 py-3 text-center">#</th>
+                                        <th class="px-3 py-3 text-left">Jugador</th>
+                                        <th class="px-3 py-3 text-center">Aciertos</th>
+                                        <th class="px-3 py-3 text-center">Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (item of rankingPreguntados(); track $index) {
+                                    <tr class="border-b border-gray-700/50 hover:bg-yellow-900/20 transition">
+                                        <td class="px-3 py-3 text-center text-yellow-400 font-bold">{{ $index + 1 }}
+                                        </td>
+                                        <td class="px-3 py-3 text-white">{{ item.usuario_nombre }}</td>
+                                        <td class="px-3 py-3 text-center text-green-400 font-bold">
+                                            {{ item.preguntas_acertadas }} / {{ item.preguntas_totales }}
+                                        </td>
+                                        <td class="px-3 py-3 text-center text-gray-400 text-xs">{{
+                                            formatearFecha(item.created_at) }}</td>
+                                    </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        } @else {
+                        <div class="flex-1 flex items-center justify-center text-gray-400">No hay partidas registradas
+                        </div>
+                        }
+                    </div>
+
+                    <!-- Simon Dice -->
+                    <div class="bg-black/30 rounded-xl border border-gray-600 flex flex-col h-[340px]">
+                        <h2 class="text-xl font-bold text-purple-300 p-3 text-center border-b border-gray-600">Simon
+                            Dice</h2>
+                        @if (rankingSimonDice().length > 0) {
+                        <div class="flex-1 overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-purple-900/50 sticky top-0">
+                                    <tr class="text-purple-200">
+                                        <th class="px-3 py-3 text-center">#</th>
+                                        <th class="px-3 py-3 text-left">Jugador</th>
+                                        <th class="px-3 py-3 text-center">Nivel</th>
+                                        <th class="px-3 py-3 text-center">Puntaje</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (item of rankingSimonDice(); track $index) {
+                                    <tr class="border-b border-gray-700/50 hover:bg-purple-900/20 transition">
+                                        <td class="px-3 py-3 text-center text-yellow-400 font-bold">{{ $index + 1 }}
+                                        </td>
+                                        <td class="px-3 py-3 text-white">{{ item.usuario_nombre }}</td>
+                                        <td class="px-3 py-3 text-center text-blue-400 font-bold">{{
+                                            item.nivel_alcanzado }}</td>
+                                        <td class="px-3 py-3 text-center text-green-400">{{ item.puntaje }}</td>
+                                    </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        } @else {
+                        <div class="flex-1 flex items-center justify-center text-gray-400">No hay partidas registradas
+                        </div>
+                        }
+                    </div>
+
+                    <!-- Ahorcado -->
+                    <div class="bg-black/30 rounded-xl border border-gray-600 flex flex-col h-[340px]">
+                        <h2 class="text-xl font-bold text-red-300 p-3 text-center border-b border-gray-600">Ahorcado
+                        </h2>
+                        @if (rankingAhorcado().length > 0) {
+                        <div class="flex-1 overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-red-900/50 sticky top-0">
+                                    <tr class="text-red-200">
+                                        <th class="px-3 py-3 text-left">Jugador</th>
+                                        <th class="px-3 py-3 text-center">Estado</th>
+                                        <th class="px-3 py-3 text-center">Tiempo</th>
+                                        <th class="px-3 py-3 text-center">Letras</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (item of rankingAhorcado(); track $index) {
+                                    <tr class="border-b border-gray-700/50 hover:bg-red-900/20 transition">
+                                        <td class="px-3 py-3 text-white">{{ item.usuario_nombre }}</td>
+                                        <td class="px-3 py-3 text-center font-bold">
+                                            <span [class]="item.ganada ? 'text-green-400' : 'text-red-400'">
+                                                {{ item.ganada ? 'Ganó' : 'Perdió' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-3 text-center text-blue-400">{{
+                                            formatearTiempo(item.tiempo_finalizacion) }}</td>
+                                        <td class="px-3 py-3 text-center text-yellow-400">{{ item.letras_seleccionadas
+                                            }}</td>
+                                    </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        } @else {
+                        <div class="flex-1 flex items-center justify-center text-gray-400">No hay partidas registradas
+                        </div>
+                        }
+                    </div>
+
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</app-background>

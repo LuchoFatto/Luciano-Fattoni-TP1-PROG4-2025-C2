@@ -1,0 +1,125 @@
+<app-background>
+    <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-[450px_280px] gap-6">
+
+            <!-- Bloque principal del juego -->
+            <div
+                class="w-[450px] h-[600px] bg-gray-900/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-gray-700 flex flex-col justify-between">
+
+                <!-- Título del juego -->
+                <header class="text-center">
+                    <h1 class="text-3xl font-bold text-blue-300 mb-2">Simon Dice</h1>
+                    <p class="text-base text-gray-400">Repite la secuencia y supera tu récord</p>
+                </header>
+
+                <!-- Indicadores de nivel y puntaje -->
+                <div class="flex justify-between items-center px-8">
+                    <div class="text-center">
+                        <h2 class="text-lg font-semibold text-gray-400">Nivel</h2>
+                        <p class="text-2xl font-bold text-blue-500">{{ nivel() }}</p>
+                    </div>
+                    <div class="text-center">
+                        <h2 class="text-lg font-semibold text-gray-400">Puntaje</h2>
+                        <p class="text-2xl font-bold text-green-500">{{ puntaje() }}</p>
+                    </div>
+                </div>
+
+                <!-- Botones de colores -->
+                <div class="flex items-center justify-center">
+                    @if (!juegoTerminado()) {
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Fila superior -->
+                        <button
+                            class="w-24 h-24 bg-red-500 rounded-full shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                            id="boton-rojo" (click)="seleccionarColor('rojo')" [disabled]="bloqueado()">
+                        </button>
+                        <button
+                            class="w-24 h-24 bg-blue-500 rounded-full shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                            id="boton-azul" (click)="seleccionarColor('azul')" [disabled]="bloqueado()">
+                        </button>
+
+                        <!-- Fila inferior -->
+                        <button
+                            class="w-24 h-24 bg-green-500 rounded-full shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                            id="boton-verde" (click)="seleccionarColor('verde')" [disabled]="bloqueado()">
+                        </button>
+                        <button
+                            class="w-24 h-24 bg-yellow-500 rounded-full shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                            id="boton-amarillo" (click)="seleccionarColor('amarillo')" [disabled]="bloqueado()">
+                        </button>
+                    </div>
+                    } @else {
+                    <!-- Mensaje de juego terminado -->
+                    <div class="bg-purple-900/70 rounded-2xl p-8 text-center max-w-xs">
+                        <h2 class="text-2xl font-bold text-white mb-4">¡Juego Terminado!</h2>
+                        <div class="space-y-2 text-lg">
+                            <p class="text-gray-300">
+                                Nivel alcanzado: <span class="text-blue-400 font-bold">{{ nivel() }}</span>
+                            </p>
+                            <p class="text-gray-300">
+                                Puntaje final: <span class="text-green-400 font-bold">{{ puntaje() }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    }
+                </div>
+
+                <!-- Botón de inicio/reinicio -->
+                <div class="text-center">
+                    <button
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition shadow-lg"
+                        (click)="iniciarJuego()">
+                        {{ juegoTerminado() ? 'Jugar de Nuevo' : (juegoIniciado() ? 'Reiniciar Juego' : 'Iniciar Juego')
+                        }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Columna lateral para estadísticas -->
+            <div class="flex flex-col gap-6">
+                @if (usuarioLogueado() && partidas().length > 0) {
+                <div class="bg-gray-900/80 rounded-2xl p-5 shadow text-white">
+                    <h3 class="text-xl font-bold text-blue-300 mb-4 text-center">Estadísticas</h3>
+                    <div class="space-y-3 text-base">
+                        <div class="flex justify-between">
+                            <span>Mejor nivel</span>
+                            <span class="text-yellow-400 font-bold">{{ estadisticas().mejorNivel }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Mejor puntaje</span>
+                            <span class="text-green-400 font-bold">{{ estadisticas().mejorPuntaje }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Nivel promedio</span>
+                            <span class="text-blue-400 font-bold">{{ estadisticas().promedioNivel }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Partidas</span>
+                            <span class="text-purple-400 font-bold">{{ estadisticas().total }}</span>
+                        </div>
+                    </div>
+                </div>
+                }
+
+                @if (partidas().length > 0) {
+                <div class="bg-gray-900/80 rounded-2xl p-5 shadow flex-1 text-white overflow-hidden flex flex-col">
+                    <h3 class="text-xl font-bold text-blue-300 mb-4 text-center">Últimas Partidas</h3>
+                    <div class="overflow-y-auto space-y-3 text-sm max-h-78">
+                        @for (partida of partidas().slice(0, 6); track partida.id) {
+                        <div class="bg-black/30 p-3 rounded border-l-4 border-blue-500">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-blue-400 font-semibold">Nivel {{ partida.nivel_alcanzado }}</span>
+                                <span class="text-green-400 font-bold">{{ partida.puntaje }} pts</span>
+                            </div>
+                            <div class="text-gray-500 text-xs">
+                                {{ formatearFecha(partida.created_at!) }}
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</app-background>

@@ -3,6 +3,7 @@
         <span class="font-bold text-xl text-blue-200 tracking-wide">Sala de Juegos</span>
         <div class="flex gap-4 items-center">
             @if (supabaseServices.usuarioActual()) {
+            <a routerLink="/results" class="text-gray-200 hover:text-blue-400 font-medium transition">Tabla Puntajes</a>
             <a routerLink="/games" class="text-gray-200 hover:text-blue-400 font-medium transition">Games</a>
             <a routerLink="/profile" class="text-gray-200 hover:text-blue-400 font-medium transition">Quién soy</a>
             <span class="text-blue-300 font-semibold user-name">{{ supabaseServices.userName }}</span>
