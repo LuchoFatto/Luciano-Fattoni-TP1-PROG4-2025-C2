@@ -1,9 +1,11 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Background } from '../../../components/background/background';
 import { SimonDiceService } from '../../../services/simon-dice.service';
 import { GameUserService } from '../../../services/game-user.service';
 import { PartidaSimonDice } from '../../../interfaces/partida-simon-dice';
+import { timer } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'app-simon-dice',
@@ -15,6 +17,9 @@ import { PartidaSimonDice } from '../../../interfaces/partida-simon-dice';
 export class SimonDice {
     private simonDiceService = inject(SimonDiceService);
     private gameUserService = inject(GameUserService);
+    private destroyRef = inject(DestroyRef);
+
+    private botonResaltado = signal<string | null>(null);
 
     // Signals para el estado del juego
     secuencia = signal<string[]>([]);
@@ -27,6 +32,8 @@ export class SimonDice {
 
     // Historial de partidas
     partidas = signal<PartidaSimonDice[]>([]);
+
+    esBotonResaltado = computed(() => (color: string) => this.botonResaltado() === color);
 
     // Estadísticas computadas
     estadisticas = computed(() => {
@@ -88,28 +95,34 @@ export class SimonDice {
     private mostrarSecuencia(): void {
         this.bloqueado.set(true);
         const secuenciaActual = this.secuencia();
-        let delay = 0;
 
-        secuenciaActual.forEach((color) => {
-            setTimeout(() => {
+        // Mostrar cada color con timer
+        secuenciaActual.forEach((color, index) => {
+            const delayTime = index * this.simonDiceService.CONFIGURACION.TIEMPOS.ENTRE_COLORES;
+
+            timer(delayTime).pipe(
+                takeUntilDestroyed(this.destroyRef)  // Cleanup automático
+            ).subscribe(() => {
                 this.resaltarBoton(color);
-            }, delay);
-            delay += this.simonDiceService.DELAY_ENTRE_COLORES;
+            });
         });
 
-        setTimeout(() => {
+        // Desbloquear al final
+        const totalTime = secuenciaActual.length * this.simonDiceService.CONFIGURACION.TIEMPOS.ENTRE_COLORES;
+        timer(totalTime).pipe(
+            takeUntilDestroyed(this.destroyRef)  // Cleanup automático
+        ).subscribe(() => {
             this.bloqueado.set(false);
-        }, delay);
+        });
     }
 
     private resaltarBoton(color: string): void {
-        const boton = document.getElementById(`boton-${color}`);
-        if (boton) {
-            boton.classList.add('brightness-150', 'scale-110');
-            setTimeout(() => {
-                boton.classList.remove('brightness-150', 'scale-110');
-            }, this.simonDiceService.TIEMPO_MOSTRAR_COLOR);
-        }
+        this.botonResaltado.set(color);
+        timer(this.simonDiceService.CONFIGURACION.TIEMPOS.MOSTRAR_COLOR).pipe(
+            takeUntilDestroyed(this.destroyRef)
+        ).subscribe(() => {
+            this.botonResaltado.set(null);
+        });
     }
 
     seleccionarColor(color: string): void {
@@ -126,13 +139,15 @@ export class SimonDice {
 
         if (nuevaEntrada.length === this.secuencia().length) {
             this.nivel.update(n => n + 1);
-            this.puntaje.update(p => p + this.simonDiceService.PUNTOS_POR_NIVEL);
+            this.puntaje.update(p => p + this.simonDiceService.CONFIGURACION.PUNTOS_POR_NIVEL);
             this.entradaJugador.set([]);
 
             this.bloqueado.set(true);
-            setTimeout(() => {
+            timer(this.simonDiceService.CONFIGURACION.TIEMPOS.ENTRE_COLORES).pipe(
+                takeUntilDestroyed(this.destroyRef)
+            ).subscribe(() => {
                 this.generarSecuencia();
-            }, this.simonDiceService.DELAY_ENTRE_COLORES);
+            });
         }
     }
 

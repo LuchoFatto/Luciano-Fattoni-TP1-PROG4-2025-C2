@@ -9,16 +9,17 @@ import { Supabase } from './supabase';
     providedIn: 'root'
 })
 export class PreguntadosService {
-    readonly ERRORES_MAXIMOS = 3;
+    // Constantes del juego
+    readonly VIDAS_INICIALES = 3;
     readonly TIEMPO_POR_PREGUNTA = 15;
     readonly PREGUNTAS_POR_LOTE = 10;
-    readonly ACIERTOS_MINIMOS_PARA_GANAR = 1;
 
     private apiUrl = 'https://api.quiz-contest.xyz/questions';
     private apiKey = '$2b$12$hVsSxUONankB7aIp/L9PLuq1CE.6bfdGBhTLhH5j8H.niZYNmyERy';
     private supabase = inject(Supabase);
+    private http = inject(HttpClient);
 
-    private categoriasDisponibles = [
+    private categorias = [
         'history',
         'geography',
         'arts%26literature',
@@ -27,145 +28,140 @@ export class PreguntadosService {
         'sports%26leisure',
     ];
 
-    constructor(private http: HttpClient) { }
+    // Obtiene preguntas de la API y mezcla las respuestas
+    obtenerPreguntas(limite: number, categoria?: string): Observable<Preguntas[]> {
+        const url = this.construirUrl(limite, categoria);
+        const headers = new HttpHeaders({ Authorization: this.apiKey });
 
-    // Obtener preguntas desde la API con mezcla de respuestas
-    obtenerPreguntasTrivia(limite: number = 3, categoria?: string): Observable<Preguntas[]> {
-        let urlCompleta = `${this.apiUrl}?limit=${limite}&page=1`;
-        if (categoria) urlCompleta += `&category=${categoria}`;
-
-        const encabezados = new HttpHeaders({
-            Authorization: this.apiKey,
-        });
-
-        return this.http.get<any>(urlCompleta, { headers: encabezados }).pipe(
-            map((respuesta) =>
-                (respuesta.questions || []).map((pregunta: any) => {
-                    const respuestaCorrecta = Array.isArray(pregunta.correctAnswers)
-                        ? pregunta.correctAnswers[0]
-                        : pregunta.correctAnswers;
-
-                    const todasLasRespuestas = [
-                        ...pregunta.incorrectAnswers,
-                        respuestaCorrecta
-                    ];
-
-                    // Algoritmo Fisher-Yates para mezclar respuestas
-                    for (let i = todasLasRespuestas.length - 1; i > 0; i--) {
-                        const indiceAleatorio = Math.floor(Math.random() * (i + 1));
-                        [todasLasRespuestas[i], todasLasRespuestas[indiceAleatorio]] =
-                            [todasLasRespuestas[indiceAleatorio], todasLasRespuestas[i]];
-                    }
-
-                    return {
-                        category: pregunta.category,
-                        format: pregunta.format,
-                        question: pregunta.question,
-                        correctAnswer: respuestaCorrecta,
-                        incorrectAnswers: pregunta.incorrectAnswers,
-                        allAnswers: todasLasRespuestas,
-                    } as Preguntas;
-                }),
-            ),
-            catchError((error) => {
-                console.error('Error al obtener preguntas desde la API:', error);
-                return of([] as Preguntas[]);
-            }),
+        return this.http.get<any>(url, { headers }).pipe(
+            map(respuesta => this.procesarRespuestaAPI(respuesta)),
+            catchError(error => {
+                console.error('Error al obtener preguntas:', error);
+                return of([]);
+            })
         );
     }
 
-    // Obtener categoría aleatoria
-    obtenerCategoriaAleatoria(): string {
-        const indiceAleatorio = Math.floor(Math.random() * this.categoriasDisponibles.length);
-        return this.categoriasDisponibles[indiceAleatorio];
+    // Inicia un nuevo juego cargando preguntas
+    iniciarJuego(): Observable<EstadoJuego> {
+        const categoria = this.obtenerCategoriaAleatoria();
+
+        return this.obtenerPreguntas(this.PREGUNTAS_POR_LOTE, categoria).pipe(
+            map(preguntas => this.crearEstadoInicial(preguntas))
+        );
     }
 
-    // Guardar resultado en Supabase
-    async guardarResultadoPartida(resultado: Omit<PartidaPreguntados, 'id' | 'created_at'>): Promise<void> {
+    // Carga más preguntas para continuar el juego
+
+    cargarMasPreguntas(estadoActual: EstadoJuego): Observable<EstadoJuego> {
+        const categoria = this.obtenerCategoriaAleatoria();
+
+        return this.obtenerPreguntas(this.PREGUNTAS_POR_LOTE, categoria).pipe(
+            map(nuevasPreguntas => ({
+                ...estadoActual,
+                preguntas: [...estadoActual.preguntas, ...nuevasPreguntas],
+                juegoGanado: false
+            }))
+        );
+    }
+
+    // Procesa la respuesta del usuario y actualiza el estado del juego
+    actualizarRespuesta(estado: EstadoJuego, respuesta: string): EstadoJuego {
+        const preguntaActual = estado.preguntas[estado.preguntaActual];
+        const esCorrecta = preguntaActual.correctAnswer === respuesta;
+
+        // Siempre avanzamos a la siguiente pregunta
+        const nuevoEstado = {
+            ...estado,
+            preguntaActual: estado.preguntaActual + 1
+        };
+
+        // Si respondió mal, perdemos una vida
+        if (!esCorrecta) {
+            nuevoEstado.intentosRestantes--;
+
+            // ¿Perdió todas las vidas?
+            if (nuevoEstado.intentosRestantes <= 0) {
+                nuevoEstado.juegoTerminado = true;
+            }
+        }
+
+        // ¿Completó todas las preguntas del lote?
+        if (nuevoEstado.preguntaActual >= estado.preguntas.length && !nuevoEstado.juegoTerminado) {
+            nuevoEstado.juegoGanado = true;
+        }
+
+        return nuevoEstado;
+    }
+
+    // Guarda el resultado de la partida en Supabase
+    async guardarPartida(userId: number, aciertos: number, total: number): Promise<void> {
+        const partida: Omit<PartidaPreguntados, 'id' | 'created_at'> = {
+            user_id: userId,
+            preguntas_acertadas: aciertos,
+            preguntas_totales: total
+        };
+
         const { error } = await this.supabase.client
             .from('partidas_preguntados')
-            .insert([resultado]);
+            .insert([partida]);
+
         if (error) {
-            console.error('Error al guardar resultado en Supabase:', error.message);
+            console.error('Error al guardar partida:', error);
             throw error;
         }
     }
 
-    inicializarJuego(preguntasPorLote: number, erroresMaximos: number, categoria?: string): Observable<EstadoJuego> {
-        const categoriaSeleccionada = categoria || this.obtenerCategoriaAleatoria();
+    // ========== MÉTODOS PRIVADOS ==========
 
-        return this.obtenerPreguntasTrivia(preguntasPorLote, categoriaSeleccionada).pipe(
-            map((preguntas) => ({
-                preguntas,
-                preguntaActual: 0,
-                intentosRestantes: erroresMaximos,
-                juegoTerminado: false,
-                tiempoInicio: Date.now(),
-                juegoGanado: false,
-            })),
-            catchError((error) => {
-                console.error('Error al inicializar el juego:', error);
-                throw error;
-            })
-        );
+    private construirUrl(limite: number, categoria?: string): string {
+        let url = `${this.apiUrl}?limit=${limite}&page=1`;
+        if (categoria) url += `&category=${categoria}`;
+        return url;
     }
 
-    actualizarEstadoJuego(estado: EstadoJuego, respuestaSeleccionada: string): EstadoJuego {
-        const preguntaActual = estado.preguntas[estado.preguntaActual];
-        const esCorrecta = preguntaActual.correctAnswer === respuestaSeleccionada;
+    private procesarRespuestaAPI(respuesta: any): Preguntas[] {
+        if (!respuesta?.questions) return [];
 
-        // SIEMPRE avanzar a la siguiente pregunta
-        estado.preguntaActual++;
+        return respuesta.questions.map((q: any) => {
+            const correcta = Array.isArray(q.correctAnswers)
+                ? q.correctAnswers[0]
+                : q.correctAnswers;
 
-        // Si es incorrecta, restar intentos
-        if (!esCorrecta) {
-            estado.intentosRestantes--;
-
-            // Verificar si perdió todos los intentos
-            if (estado.intentosRestantes <= 0) {
-                estado.juegoTerminado = true;
-                estado.juegoGanado = false;
-            }
-        }
-
-        // Verificar si completó todas las preguntas del lote
-        if (estado.preguntaActual >= estado.preguntas.length && estado.intentosRestantes > 0) {
-            estado.juegoGanado = true;
-        }
-
-        return { ...estado };
+            return {
+                category: q.category,
+                format: q.format,
+                question: q.question,
+                correctAnswer: correcta,
+                incorrectAnswers: q.incorrectAnswers,
+                allAnswers: this.mezclarRespuestas([...q.incorrectAnswers, correcta])
+            };
+        });
     }
 
-    async finalizarJuego(estado: EstadoJuego, userId: number, aciertos: number): Promise<void> {
-        const resultado: Omit<PartidaPreguntados, 'id' | 'created_at'> = {
-            user_id: userId,
-            preguntas_acertadas: aciertos,
-            preguntas_totales: estado.preguntaActual, // Total de preguntas respondidas
+    private mezclarRespuestas(respuestas: string[]): string[] {
+        // Algoritmo Fisher-Yates para mezclar
+        const mezcladas = [...respuestas];
+        for (let i = mezcladas.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [mezcladas[i], mezcladas[j]] = [mezcladas[j], mezcladas[i]];
+        }
+        return mezcladas;
+    }
+
+    private crearEstadoInicial(preguntas: Preguntas[]): EstadoJuego {
+        return {
+            preguntas,
+            preguntaActual: 0,
+            intentosRestantes: this.VIDAS_INICIALES,
+            juegoTerminado: false,
+            tiempoInicio: Date.now(),
+            juegoGanado: false
         };
-
-        await this.guardarResultadoPartida(resultado);
     }
 
-    cargarMasPreguntas(
-        estadoActual: EstadoJuego,
-        preguntasPorLote: number
-    ): Observable<EstadoJuego> {
-        const categoriaAleatoria = this.obtenerCategoriaAleatoria();
-
-        return this.obtenerPreguntasTrivia(preguntasPorLote, categoriaAleatoria).pipe(
-            map((nuevasPreguntas) => {
-                const preguntasCombinadas = [...estadoActual.preguntas, ...nuevasPreguntas];
-                return {
-                    ...estadoActual,
-                    preguntas: preguntasCombinadas,
-                    juegoTerminado: false,
-                    juegoGanado: false, // Resetear para continuar jugando
-                };
-            }),
-            catchError((error) => {
-                console.error('Error al cargar más preguntas:', error);
-                throw error;
-            })
-        );
+    private obtenerCategoriaAleatoria(): string {
+        const indice = Math.floor(Math.random() * this.categorias.length);
+        return this.categorias[indice];
     }
 }

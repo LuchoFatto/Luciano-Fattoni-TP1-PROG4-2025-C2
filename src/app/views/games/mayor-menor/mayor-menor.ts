@@ -1,66 +1,51 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Background } from '../../../components/background/background';
-import { Supabase } from '../../../services/supabase';
 import { MayorMenorService } from '../../../services/mayor-menor.service';
+import { GameUserService } from '../../../services/game-user.service';
 import { CrearPartidaMayorMenor, EstadoMayorMenor, PartidaMayorMenor } from '../../../interfaces/partida-mayor-menor';
-import { UserService } from '../../../services/user.service';
 
 @Component({
     selector: 'app-mayor-menor',
-    imports: [Background],
+    imports: [CommonModule, Background],
     templateUrl: './mayor-menor.html',
     styleUrl: './mayor-menor.css'
 })
-export class MayorMenor implements OnInit {
-    private readonly ERRORES_MAXIMOS = 3;
-    private readonly TOTAL_CARTAS = 13;
-    private readonly NOMBRES_CARTAS = ['', 'As', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-    private readonly DECIMALES_PROMEDIO = 1;
+export class MayorMenor {
+    private mayorMenorService = inject(MayorMenorService);
+    private gameUserService = inject(GameUserService);
 
-    private datosUsuarioCache: any = null;
+    readonly CONFIGURACION = {
+        JUEGO: {
+            ERRORES_MAXIMOS: 3,
+            TOTAL_CARTAS: 13
+        },
+        NOMBRES_CARTAS: ['', 'As', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'],
+        DECIMALES_PROMEDIO: 1
+    };
 
     estado = signal<EstadoMayorMenor>({
         cartaActual: this.generarCartaAleatoria(),
         errores: 0,
         puntaje: 0,
         terminado: false,
-        erroresMaximos: this.ERRORES_MAXIMOS
+        erroresMaximos: this.CONFIGURACION.JUEGO.ERRORES_MAXIMOS
     });
-
-    private supabase = inject(Supabase);
-    private mayorMenorService = inject(MayorMenorService);
-    private userService = inject(UserService);
 
     async ngOnInit() {
         try {
-            await this.inicializarDatosUsuario();
-            await this.cargarPartidasUsuario();
+            const user = await this.gameUserService.getCurrentUser();
+            if (user) {
+                console.log('Usuario cargado:', user);
+                await this.cargarPartidasUsuario();
+            }
         } catch (error) {
-            console.error('Error al cargar partidas del usuario:', error);
+            console.error('Error en inicialización:', error);
         }
     }
 
-    private async obtenerDatosUsuario(): Promise<any> {
-        const usuarioActual = this.supabase.usuarioActual();
-        if (!usuarioActual) return null;
-
-        // Si ya tenemos datos cache y el usuario es el mismo, devolverlos
-        if (this.datosUsuarioCache?.auth_id === usuarioActual.id) {
-            return this.datosUsuarioCache;
-        }
-
-        // Si no, obtener de BD y cachear
-        try {
-            const datosUsuario = await this.userService.getUserByAuthId(usuarioActual.id);
-            if (datosUsuario?.id) {
-                this.datosUsuarioCache = datosUsuario;
-                return datosUsuario;
-            }
-        } catch (error) {
-            console.error('Error obteniendo datos del usuario:', error);
-        }
-
-        return null;
+    usuarioLogueado(): boolean {
+        return this.gameUserService.isUserLoggedIn();
     }
 
     iniciarJuego(): void {
@@ -69,14 +54,14 @@ export class MayorMenor implements OnInit {
             errores: 0,
             puntaje: 0,
             terminado: false,
-            erroresMaximos: this.ERRORES_MAXIMOS
+            erroresMaximos: this.CONFIGURACION.JUEGO.ERRORES_MAXIMOS
         });
     }
 
     partidas = signal<PartidaMayorMenor[]>([]);
 
     private generarCartaAleatoria(): number {
-        return Math.floor(Math.random() * this.TOTAL_CARTAS) + 1;
+        return Math.floor(Math.random() * this.CONFIGURACION.JUEGO.TOTAL_CARTAS) + 1;
     }
 
     // Apostar mayor
@@ -126,53 +111,37 @@ export class MayorMenor implements OnInit {
 
     // Guardar partida
     private async guardarPartida(): Promise<void> {
-        try {
-            const datosUsuario = await this.obtenerDatosUsuario();
-            if (!datosUsuario?.id) {
-                console.warn('No se pudieron obtener datos del usuario');
-                return;
+        const user = await this.gameUserService.getCurrentUser();
+        if (user && user.id) {
+            try {
+                const estadoActual = this.estado();
+                const partida: CrearPartidaMayorMenor = {
+                    user_id: user.id.toString(),
+                    puntaje: estadoActual.puntaje,
+                    intentos: estadoActual.puntaje + estadoActual.errores,
+                };
+
+                const guardado = await this.mayorMenorService.guardarPartida(partida);
+
+                if (guardado) {
+                    await this.cargarPartidasUsuario();
+                    console.log('Resultado guardado correctamente');
+                } else {
+                    console.error('Error al guardar partida en la base de datos');
+                }
+            } catch (error) {
+                console.error('Error al guardar resultado:', error);
             }
-
-            const estadoActual = this.estado();
-            const partida: CrearPartidaMayorMenor = {
-                user_id: datosUsuario.id.toString(),
-                puntaje: estadoActual.puntaje,
-                intentos: estadoActual.puntaje + estadoActual.errores,
-            };
-
-            const guardado = await this.mayorMenorService.guardarPartida(partida);
-
-            if (guardado) {
-                await this.cargarPartidasUsuario();
-            } else {
-                console.error('Error al guardar partida en la base de datos');
-            }
-
-        } catch (error) {
-            console.error('Error guardando partida:', error);
         }
     }
 
-    async cargarPartidasUsuario(): Promise<void> {
+    private async cargarPartidasUsuario(): Promise<void> {
         try {
-            const datosUsuario = await this.obtenerDatosUsuario();
-            if (!datosUsuario?.id) {
-                console.warn('No hay usuario logueado');
-                this.partidas.set([]);
-                return;
-            }
-
-            const partidasUsuario = await this.mayorMenorService.obtenerPartidasPorUsuario(datosUsuario.id.toString());
-            this.partidas.set(partidasUsuario || []);
-
+            const partidas = await this.gameUserService.loadUserGames('partidas_mayor_menor');
+            this.partidas.set(partidas);
         } catch (error) {
-            console.error('Error cargando partidas del usuario:', error);
-            this.partidas.set([]);
+            console.error('Error al cargar partidas:', error);
         }
-    }
-
-    private async inicializarDatosUsuario(): Promise<void> {
-        await this.obtenerDatosUsuario();
     }
 
     // Métodos helper para estadísticas
@@ -185,7 +154,7 @@ export class MayorMenor implements OnInit {
         const partidas = this.partidas();
         if (partidas.length === 0) return 0;
         const suma = partidas.reduce((acc, p) => acc + p.puntaje, 0);
-        const factor = Math.pow(10, this.DECIMALES_PROMEDIO);
+        const factor = Math.pow(10, this.CONFIGURACION.DECIMALES_PROMEDIO);
         return Math.round((suma / partidas.length) * factor) / factor;
     }
 
@@ -198,13 +167,9 @@ export class MayorMenor implements OnInit {
         });
     }
 
-    usuarioLogueado(): boolean {
-        return this.supabase.usuarioActual() !== null;
-    }
-
     // Métodos helper para el template
     obtenerNombreCarta(valor: number): string {
-        return this.NOMBRES_CARTAS[valor] || '';
+        return this.CONFIGURACION.NOMBRES_CARTAS[valor] || '';
     }
 
     obtenerEstadoTexto(): string {

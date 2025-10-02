@@ -14,7 +14,7 @@
 
                 <div class="text-center mb-6">
                     <p class="text-xl font-medium text-blue-300">
-                        {{ obtenerEstadoTexto() }}
+                        {{ obtenerTextoEstado() }}
                     </p>
                     <p class="text-base font-bold transition" [class.text-yellow-400]="tiempoRestante() > 5"
                         [class.text-red-500]="tiempoRestante() <= 5" [class.animate-pulse]="tiempoRestante() <= 5">
@@ -23,15 +23,15 @@
                 </div>
 
                 <!-- Pregunta actual y opciones -->
-                @if (preguntaActual && !estadoDelJuego().juegoTerminado) {
+                @if (preguntaActual() && !estado().juegoTerminado) {
                 <div class="mb-6">
                     <div class="bg-white rounded-lg p-6 shadow-lg text-center">
                         <div class="text-lg font-bold text-gray-800 mb-2">
-                            {{ preguntaActual.question }}
+                            {{ preguntaActual().question }}
                         </div>
                         <div class="grid grid-cols-2 gap-4 mt-4">
-                            @for (opcion of preguntaActual.allAnswers; track opcion) {
-                            <button (click)="seleccionarRespuesta(opcion)" [disabled]="mostrandoResultado()"
+                            @for (opcion of preguntaActual().allAnswers; track opcion) {
+                            <button (click)="seleccionarRespuesta(opcion)" [disabled]="feedback().activo"
                                 [class]="'font-semibold py-2 rounded-lg transition focus:outline-none focus:ring-2 ' + obtenerClaseBoton(opcion)">
                                 {{ opcion }}
                             </button>
@@ -43,11 +43,11 @@
 
                 <!-- Mensaje de fin de partida -->
                 <div class="h-20 mb-4">
-                    @if (estadoDelJuego().juegoTerminado) {
+                    @if (estado().juegoTerminado) {
                     <div class="bg-purple-900/50 rounded-lg p-4 text-center h-full flex flex-col justify-center">
                         <p class="text-white font-semibold mb-1">¡Partida Terminada!</p>
                         <p class="text-gray-300 text-sm">
-                            Aciertos: <span class="text-yellow-400 font-bold">{{ aciertosJuego() }}</span>
+                            Aciertos: <span class="text-yellow-400 font-bold">{{ aciertos() }}</span>
                         </p>
                     </div>
                     }
@@ -55,7 +55,7 @@
 
                 <!-- Botón de nuevo juego -->
                 <div class="text-center">
-                    @if (!juegoIniciado() || estadoDelJuego().juegoTerminado) {
+                    @if (!juegoActivo() || estado().juegoTerminado) {
                     <button (click)="iniciarJuego()"
                         class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-8 rounded-lg transition">
                         Nuevo Juego
@@ -72,11 +72,11 @@
                     <div class="space-y-3 text-base">
                         <div class="flex justify-between">
                             <span>Mejor puntaje</span>
-                            <span class="text-yellow-400 font-bold">{{ obtenerMejorPuntaje() }}</span>
+                            <span class="text-yellow-400 font-bold">{{ estadisticas().mejorPuntaje }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span>Promedio</span>
-                            <span class="text-green-400 font-bold">{{ obtenerPromedioPuntaje() }}</span>
+                            <span class="text-green-400 font-bold">{{ estadisticas().promedio }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span>Partidas</span>

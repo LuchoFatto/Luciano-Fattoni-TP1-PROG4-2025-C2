@@ -57,7 +57,7 @@ export const routes: Routes = [
     },
     {
         path: '**',
-        loadComponent: () => import('./components/error/error').then((archivo) => archivo.Error),
+        redirectTo: 'home',
         pathMatch: 'full',
     }
 ];

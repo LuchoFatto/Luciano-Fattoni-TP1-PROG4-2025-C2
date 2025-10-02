@@ -31,21 +31,31 @@
                         <!-- Fila superior -->
                         <button
                             class="w-24 h-24 bg-red-500 rounded-full shadow-lg hover:scale-105 transition-all disabled:opacity-50"
-                            id="boton-rojo" (click)="seleccionarColor('rojo')" [disabled]="bloqueado()">
+                            [class.brightness-150]="esBotonResaltado()('rojo')"
+                            [class.scale-110]="esBotonResaltado()('rojo')" (click)="seleccionarColor('rojo')"
+                            [disabled]="bloqueado()">
                         </button>
+
                         <button
                             class="w-24 h-24 bg-blue-500 rounded-full shadow-lg hover:scale-105 transition-all disabled:opacity-50"
-                            id="boton-azul" (click)="seleccionarColor('azul')" [disabled]="bloqueado()">
+                            [class.brightness-150]="esBotonResaltado()('azul')"
+                            [class.scale-110]="esBotonResaltado()('azul')" (click)="seleccionarColor('azul')"
+                            [disabled]="bloqueado()">
                         </button>
 
                         <!-- Fila inferior -->
                         <button
                             class="w-24 h-24 bg-green-500 rounded-full shadow-lg hover:scale-105 transition-all disabled:opacity-50"
-                            id="boton-verde" (click)="seleccionarColor('verde')" [disabled]="bloqueado()">
+                            [class.brightness-150]="esBotonResaltado()('verde')"
+                            [class.scale-110]="esBotonResaltado()('verde')" (click)="seleccionarColor('verde')"
+                            [disabled]="bloqueado()">
                         </button>
+
                         <button
                             class="w-24 h-24 bg-yellow-500 rounded-full shadow-lg hover:scale-105 transition-all disabled:opacity-50"
-                            id="boton-amarillo" (click)="seleccionarColor('amarillo')" [disabled]="bloqueado()">
+                            [class.brightness-150]="esBotonResaltado()('amarillo')"
+                            [class.scale-110]="esBotonResaltado()('amarillo')" (click)="seleccionarColor('amarillo')"
+                            [disabled]="bloqueado()">
                         </button>
                     </div>
                     } @else {
@@ -76,9 +86,9 @@
             </div>
 
             <!-- Columna lateral para estadísticas -->
-            <div class="flex flex-col gap-6">
+            <div class="flex flex-col gap-6 h-[600px]">
                 @if (usuarioLogueado() && partidas().length > 0) {
-                <div class="bg-gray-900/80 rounded-2xl p-5 shadow text-white">
+                <div class="bg-gray-900/80 rounded-2xl p-5 shadow text-white flex-shrink-0">
                     <h3 class="text-xl font-bold text-blue-300 mb-4 text-center">Estadísticas</h3>
                     <div class="space-y-3 text-base">
                         <div class="flex justify-between">
@@ -104,7 +114,7 @@
                 @if (partidas().length > 0) {
                 <div class="bg-gray-900/80 rounded-2xl p-5 shadow flex-1 text-white overflow-hidden flex flex-col">
                     <h3 class="text-xl font-bold text-blue-300 mb-4 text-center">Últimas Partidas</h3>
-                    <div class="overflow-y-auto space-y-3 text-sm max-h-78">
+                    <div class="overflow-y-auto space-y-3 text-sm flex-1">
                         @for (partida of partidas().slice(0, 6); track partida.id) {
                         <div class="bg-black/30 p-3 rounded border-l-4 border-blue-500">
                             <div class="flex justify-between items-center mb-1">

@@ -34,7 +34,7 @@ export class RankingService {
             throw error;
         }
 
-        // Ordenar por longitud de palabra en el frontend (Supabase no soporta LENGTH() en order)
+        // Ordenar
         const resultados = data?.map((item: any) => ({
             usuario_nombre: item.usuarios?.nombre || 'Desconocido',
             palabra: item.palabra,
@@ -44,7 +44,7 @@ export class RankingService {
             created_at: item.created_at
         })) || [];
 
-        // Ordenamiento final con desempate por longitud de palabra
+        // Ordenamiento
         return resultados.sort((a, b) => {
             // 1. Ganadas primero
             if (a.ganada !== b.ganada) return b.ganada ? 1 : -1;
@@ -54,7 +54,7 @@ export class RankingService {
                 return a.tiempo_finalizacion - b.tiempo_finalizacion;
             }
 
-            // 3. Palabras más largas (más difíciles)
+            // 3. Palabras más largas
             return b.palabra.length - a.palabra.length;
         });
     }
@@ -64,7 +64,7 @@ export class RankingService {
             .from('partidas_mayor_menor')
             .select(`
                 puntaje,
-                fecha,
+                created_at,
                 usuarios(nombre)
             `)
             .order('puntaje', { ascending: false })
@@ -78,7 +78,7 @@ export class RankingService {
         return data?.map((item: any) => ({
             usuario_nombre: item.usuarios?.nombre || 'Desconocido',
             puntaje: item.puntaje,
-            created_at: item.fecha  // Mapear 'fecha' a 'created_at' para la interface
+            created_at: item.created_at
         })) || [];
     }
 

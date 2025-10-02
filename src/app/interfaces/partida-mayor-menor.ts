@@ -2,7 +2,7 @@
 export interface PartidaMayorMenor {
     id: string;
     user_id: string;
-    fecha: string;
+    created_at: string;
     puntaje: number;
     intentos: number;
 }

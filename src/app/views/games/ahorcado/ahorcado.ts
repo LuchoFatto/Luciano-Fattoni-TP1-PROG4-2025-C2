@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Background } from '../../../components/background/background';
 import { AhorcadoService } from '../../../services/ahorcado.service';
 import { Supabase } from '../../../services/supabase';
@@ -9,7 +9,7 @@ import { Supabase } from '../../../services/supabase';
     templateUrl: './ahorcado.html',
     styleUrl: './ahorcado.css'
 })
-export class Ahorcado implements OnInit {
+export class Ahorcado {
     private ahorcadoService = inject(AhorcadoService);
     private supabase = inject(Supabase);
 
